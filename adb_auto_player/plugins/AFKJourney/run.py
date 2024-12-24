@@ -453,6 +453,9 @@ class AFKJourney(Plugin):
             if self.find_first_template_center("time_of_day.png") is None:
                 self.press_back_button()
                 sleep(3)
+            elif self.find_first_template_center("dotdotdot.png") is not None:
+                self.press_back_button()
+                sleep(1)
             else:
                 break
 

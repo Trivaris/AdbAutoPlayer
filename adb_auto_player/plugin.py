@@ -47,6 +47,7 @@ class Plugin:
     def find_first_template_center(
         self,
         template: str,
+        threshold: float = 0.9,
         grayscale: bool = False,
         base_image: Image.Image | None = None,
     ) -> tuple[int, int] | None:
@@ -56,7 +57,11 @@ class Plugin:
         )
 
         return screen_utils.find_center(
-            self.device, template_path, grayscale=grayscale, base_image=base_image
+            self.device,
+            template_path,
+            threshold=threshold,
+            grayscale=grayscale,
+            base_image=base_image,
         )
 
     def find_all_template_centers(
