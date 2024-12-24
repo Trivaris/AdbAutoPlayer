@@ -639,7 +639,7 @@ class AFKJourney(Plugin):
         return False
 
     def __handle_corrupt_creature(self) -> bool:
-        ready = self.wait_for_template("ready.png")
+        ready = self.wait_for_template("ready.png", timeout=10)
 
         self.device.click(*ready)
         # Sometimes people wait forever for a third to join...
