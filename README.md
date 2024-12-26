@@ -3,6 +3,9 @@
 ## [Click Here to Access the Full Documentation and Usage Details](https://yulesxoxo.github.io/AdbAutoPlayer/)
 ![gui.png](docs/src/images/app/app.png)
 
+## Supported Games
+- AFK Journey
+
 ## Windows Native Setup
 1. Install [Python](https://www.python.org/downloads/)
 2. Install [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer)
