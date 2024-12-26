@@ -1,6 +1,8 @@
 # Troubleshooting
 
 ## Error: *"Failed to connect to the device: No devices found"*
+> TODO: update screenshot
+
 ![no_devices_found.png](../images/app/no_devices_found.png)  
 - This error means no ADB devices were detected.  
 ### Windows
@@ -13,7 +15,9 @@
 
 ---
 
-## Error: *"Failed to connect to the device: device 'xyz' not found"*  
+## Error: *"Failed to connect to the device: device 'xyz' not found"*
+> TODO: update this config is now edited directly in the GUI
+
 ![failed_to_connect.png](../images/app/failed_to_connect.png)
 1. Open the `main_config.toml` file in the **AdbAutoPlayer_MacOS** directory.  
 2. Locate the `id` field and update the value with the device ID visible in the logs (the first device shown in green).
@@ -22,12 +26,16 @@
 ---
 
 ### Success!
+> TODO: update screenshot  
+
 Once connected, you'll see:  
 ![Connected Successfully](../images/app/successfully_connected.png)
 
 ---
 
 ## Starting a Game
+> TODO: update screenshot  
+
 - Launch a supported game, and the app interface will adapt accordingly:  
   ![Game Interface](../images/app/afk_journey.png)
 
