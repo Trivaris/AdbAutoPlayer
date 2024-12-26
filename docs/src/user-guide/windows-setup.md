@@ -49,4 +49,10 @@ When launching AdbAutoPlayer, Windows Defender SmartScreen may block the applica
 
 ---
 
+## Windows Security pop up
+
+If this pop up appears simply click **Allow**. If you want more info read here: [**ADB (Android Debug Bridge)**](https://developer.android.com/tools/adb)
+
+![windows_security_adb.png](../images/windows/windows_security_adb.png)
+
 # Continue to the [Troubleshooting Guide](troubleshoot.md)

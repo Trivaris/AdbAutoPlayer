@@ -39,7 +39,7 @@ def get_device(main_config: dict[str, Any]) -> AdbDevice:
         device = __connect_to_device(client, only_available_device)
 
     if device is None:
-        raise AdbException(f"{device_id} not found")
+        raise AdbException(f"Device: {device_id} not found")
 
     logging.info(f"Successfully connected to device {device_id}")
     return device

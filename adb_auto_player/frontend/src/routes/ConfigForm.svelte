@@ -72,7 +72,7 @@
 </script>
 
 <form class="config-form">
-    <h2>Edit Game Config</h2>
+    <h2>{#if isGameConfig}Edit Game Config{:else}Edit Main Config{/if}</h2>
 
     {#each configSections as { sectionKey, sectionConfig } }
         <fieldset>

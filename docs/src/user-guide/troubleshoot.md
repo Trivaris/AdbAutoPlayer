@@ -1,10 +1,10 @@
 # Troubleshooting
 
-## Error: *"Failed to connect to the device: No devices found"*
-> TODO: update screenshot
+## [WARNING] No devices found
+![emulator-5554_not_found.png](../images/app/no_devices_found.png)  
 
-![no_devices_found.png](../images/app/no_devices_found.png)  
-- This error means no ADB devices were detected.  
+This is a Warning that does not necessarily need to be fixed. You can try following things:
+
 ### Windows
 - Start **LDPlayer** and check the [Windows Setup Guide](windows-setup.md) if LDPlayer is configured correctly and running this should not happen
 
@@ -15,27 +15,21 @@
 
 ---
 
-## Error: *"Failed to connect to the device: device 'xyz' not found"*
-> TODO: update this config is now edited directly in the GUI
+## [ERROR] Device: <device_id> not found
+![device_not_found.png](../images/app/device_not_found.png)  
 
-![failed_to_connect.png](../images/app/failed_to_connect.png)
-1. Open the `main_config.toml` file in the **AdbAutoPlayer_MacOS** directory.  
-2. Locate the `id` field and update the value with the device ID visible in the logs (the first device shown in green).
-3. Save the file and click **Reload main_config.toml** in the app.
+Click Edit Main Config and change the Device ID to one of the listed Devices, the correct one will most likely be `emulator-<number>`
+![main_config.png](../images/app/main_config.png)
 
 ---
 
 ### Success!
-> TODO: update screenshot  
-
 Once connected, you'll see:  
 ![Connected Successfully](../images/app/successfully_connected.png)
 
 ---
 
 ## Starting a Game
-> TODO: update screenshot  
-
 - Launch a supported game, and the app interface will adapt accordingly:  
   ![Game Interface](../images/app/afk_journey.png)
 

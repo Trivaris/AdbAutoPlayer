@@ -10,7 +10,7 @@
 ---
 
 ## Upcoming/Pending Features
-- **Season Legend Trial Automation**: Will only happen if they add new stages or next season.
+- **Season Legend Trial Automation**: Will happen in Season 3
 
 ---
 
