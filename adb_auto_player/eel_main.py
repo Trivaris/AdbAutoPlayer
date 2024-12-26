@@ -16,14 +16,21 @@ from adb_auto_player.logging_setup import (
     enable_frontend_logs,
 )
 
-setup_logging()
-
 
 def close(page: str, sockets: list[WebSocketT]) -> NoReturn:
     sys.exit(0)
 
 
-def init() -> None:
+def init_logs() -> None:
+    setup_logging()
+    main_config = plugin_loader.get_main_config()
+    update_logging_from_config(main_config)
+    enable_frontend_logs()
+
+
+def init_eel() -> None:
+    multiprocessing.freeze_support()
+    eel_functions.init()
     if getattr(sys, "frozen", False):
         path = os.path.join(sys._MEIPASS, "frontend", "build")  # type: ignore
         eel.init(path, [".svelte", ".html", ".js"])
@@ -52,16 +59,9 @@ def start() -> None:
         )
 
 
-def __start_eel() -> None:
-    eel_functions.init()
-    init()
-    start()
-
-
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    main_config = plugin_loader.get_main_config()
-    update_logging_from_config(main_config)
-    enable_frontend_logs()
-    update_manager.version_updater()
-    __start_eel()
+    init_logs()
+    init_eel()
+    update_manager.run_self_updater()
+    start()

@@ -200,13 +200,12 @@ def update_plugins() -> None | bool:
     return all_plugins_installed
 
 
-def version_updater() -> None:
+def run_self_updater() -> None:
     version = get_version_from_pyproject()
     if version == "0.0.0":
         logging.info("Skipping updater for dev")
         return
-    logging.info(f"Using Version: {version}")
-    logging.info("Checking for updates")
+    logging.info(f"App Version: {version}")
     result = update_plugins()
     if result is None:
         logging.info("No new updates")
