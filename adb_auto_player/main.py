@@ -5,6 +5,7 @@ from typing import NoReturn
 
 import eel
 from eel.types import WebSocketT
+from psutil import Process
 
 import adb_auto_player.eel_functions as eel_functions
 
@@ -15,9 +16,30 @@ from adb_auto_player.logging_setup import (
     setup_logging,
     enable_frontend_logs,
 )
+import psutil
+import platform
+
+ADB_WAS_RUNNING: bool = True
 
 
-def close(page: str, sockets: list[WebSocketT]) -> NoReturn:
+def terminate_adb() -> None:
+    process = get_adb_process()
+    if process is not None:
+        process.terminate()
+
+
+def get_adb_process() -> Process | None:
+    adb_process_name = "adb.exe" if platform.system() == "Windows" else "adb"
+    for process in psutil.process_iter(["name"]):
+        if process.info["name"] == adb_process_name:
+            return process
+    return None
+
+
+def close(page: str | None = None, sockets: list[WebSocketT] | None = None) -> NoReturn:
+    global ADB_WAS_RUNNING
+    if not ADB_WAS_RUNNING:
+        terminate_adb()
     sys.exit(0)
 
 
@@ -62,6 +84,10 @@ def start() -> None:
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     init_logs()
+
+    if get_adb_process() is None:
+        ADB_WAS_RUNNING = False
+
     init_eel()
     update_manager.run_self_updater()
     start()

@@ -1,7 +1,6 @@
 import inspect
 import logging
 import multiprocessing.queues
-import sys
 from logging.handlers import QueueHandler
 from multiprocessing import Process
 from typing import Any, NoReturn
@@ -14,6 +13,7 @@ import adb_auto_player.plugin_loader as plugin_loader
 from adb_auto_player import logging_setup
 from adb_auto_player.exceptions import AdbException
 from adb_auto_player.logging_setup import update_logging_from_config
+from adb_auto_player.main import close
 from adb_auto_player.plugin import Plugin
 
 main_config = plugin_loader.get_main_config()
@@ -246,4 +246,4 @@ def stop_action() -> None:
 
 @eel.expose
 def shutdown() -> NoReturn:
-    sys.exit(0)
+    close()
