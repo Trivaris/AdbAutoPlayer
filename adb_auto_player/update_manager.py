@@ -25,7 +25,7 @@ def __get_pyproject_toml_path() -> str:
         return os.path.join(Path(os.getcwd()).parent, "pyproject.toml")
 
 
-def get_version_from_pyproject() -> str:
+def __get_version_from_pyproject() -> str:
     global PYPROJECT_VERSION
     if PYPROJECT_VERSION is not None:
         return PYPROJECT_VERSION
@@ -85,7 +85,7 @@ def __get_version_from_version_check_file() -> str | None:
 def __get_last_checked_version() -> str:
     """Get the version from the VERSION_CHECK file or fallback to pyproject version."""
     version_check = __get_version_from_version_check_file()
-    pyproject_version = get_version_from_pyproject()
+    pyproject_version = __get_version_from_pyproject()
     if version_check is None:
         return pyproject_version
     return (
@@ -144,7 +144,7 @@ def __install_compatible_plugins() -> bool | None:
         if min_adb_auto_player_version is None:
             continue
         if Version(min_adb_auto_player_version) <= Version(
-            get_version_from_pyproject()
+            __get_version_from_pyproject()
         ):
             __install_plugin_from_tmp(dir_path, dir_name)
         else:
@@ -179,7 +179,7 @@ def __install_plugin_from_tmp(dir_path: str, dir_name: str) -> None:
     logging.info(f"Plugin updated: {dir_name}")
 
 
-def update_plugins() -> None | bool:
+def __update_plugins() -> None | bool:
     if not __is_new_version_available():
         return None
 
@@ -201,12 +201,12 @@ def update_plugins() -> None | bool:
 
 
 def run_self_updater() -> None:
-    version = get_version_from_pyproject()
+    version = __get_version_from_pyproject()
     if version == "0.0.0":
         logging.info("Skipping updater for dev")
         return
     logging.info(f"App Version: {version}")
-    result = update_plugins()
+    result = __update_plugins()
     if result is None:
         logging.info("No new updates")
     elif result is not None and not result:

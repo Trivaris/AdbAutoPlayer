@@ -132,7 +132,7 @@ class AFKJourney(Plugin):
             "general": {"excluded_heroes": self.EXCLUDED_HEROES_CHOICES},
         }
 
-    def get_general_config(self) -> tuple[list[str], int]:
+    def __get_general_config(self) -> tuple[list[str], int]:
         config = self.config.get(self.CONFIG_GENERAL, {})
         excluded_heroes: list[str] = config.get("excluded_heroes", [])
         assist_limit = int(config.get("attempts", 20))
@@ -140,7 +140,7 @@ class AFKJourney(Plugin):
         assist_limit = max(assist_limit, 1)
         return excluded_heroes, assist_limit
 
-    def get_afk_stage_config(self) -> tuple[int, int, bool, bool]:
+    def __get_afk_stage_config(self) -> tuple[int, int, bool, bool]:
         config = self.config.get(self.CONFIG_AFK_STAGES, {})
 
         attempts = int(config.get("attempts", 5))
@@ -156,7 +156,7 @@ class AFKJourney(Plugin):
         push_both_modes = bool(config.get("push_both_modes", True))
         return attempts, formations, use_suggested_formations, push_both_modes
 
-    def get_duras_trials_config(self) -> tuple[int, int, bool, bool]:
+    def __get_duras_trials_config(self) -> tuple[int, int, bool, bool]:
         config = self.config.get(self.CONFIG_DURAS_TRIALS, {})
 
         attempts = int(config.get("attempts", 2))
@@ -179,9 +179,9 @@ class AFKJourney(Plugin):
         :return: bool
         """
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            _, formations, _, _ = self.get_duras_trials_config()
+            _, formations, _, _ = self.__get_duras_trials_config()
         else:
-            _, formations, _, _ = self.get_afk_stage_config()
+            _, formations, _, _ = self.__get_afk_stage_config()
         formation_num: int = 0
         if not use_suggested_formations:
             logging.info("Not using suggested Formations")
@@ -250,7 +250,7 @@ class AFKJourney(Plugin):
         return True
 
     def __formation_contains_excluded_hero(self) -> str | None:
-        excluded_heroes, _ = self.get_general_config()
+        excluded_heroes, _ = self.__get_general_config()
         excluded_heroes_dict = {
             f"heroes/{name.lower().replace(" ", "")}.png": name
             for name in excluded_heroes
@@ -278,9 +278,9 @@ class AFKJourney(Plugin):
 
     def __handle_multi_stage(self) -> bool:
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            attempts, _, _, _ = self.get_duras_trials_config()
+            attempts, _, _, _ = self.__get_duras_trials_config()
         else:
-            attempts, _, _, _ = self.get_afk_stage_config()
+            attempts, _, _, _ = self.__get_afk_stage_config()
         count: int = 0
         count_stage_2: int = 0
 
@@ -300,7 +300,7 @@ class AFKJourney(Plugin):
                 logging.info(f"Starting Battle #{count_stage_2} vs Team 2")
                 is_stage_2 = True
 
-            if not self.start_battle():
+            if not self.__start_battle():
                 return False
 
             if not is_stage_2:
@@ -336,8 +336,8 @@ class AFKJourney(Plugin):
                         self.__select_afk_stage()
                         return False
 
-    def start_battle(self) -> bool:
-        _, _, _, spend_gold = self.get_duras_trials_config()
+    def __start_battle(self) -> bool:
+        _, _, _, spend_gold = self.__get_duras_trials_config()
 
         self.wait_for_template("records.png")
         self.device.click(850, 1780)
@@ -374,15 +374,15 @@ class AFKJourney(Plugin):
 
     def __handle_single_stage(self) -> bool:
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            attempts, _, _, _ = self.get_duras_trials_config()
+            attempts, _, _, _ = self.__get_duras_trials_config()
         else:
-            attempts, _, _, _ = self.get_afk_stage_config()
+            attempts, _, _, _ = self.__get_afk_stage_config()
         count: int = 0
         while count < attempts:
             count += 1
 
             logging.info(f"Starting Battle #{count}")
-            if not self.start_battle():
+            if not self.__start_battle():
                 return False
 
             template, x, y = self.wait_for_any_template(
@@ -403,7 +403,7 @@ class AFKJourney(Plugin):
         Entry for pushing AFK Stages
         :param season: Push Season Stage if True otherwise push regular AFK Stages
         """
-        _, _, _, push_both_modes = self.get_afk_stage_config()
+        _, _, _, push_both_modes = self.__get_afk_stage_config()
         self.store[self.STORE_SEASON] = season
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
 
@@ -542,7 +542,7 @@ class AFKJourney(Plugin):
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None:
-        _, _, use_suggested_formations, _ = self.get_duras_trials_config()
+        _, _, use_suggested_formations, _ = self.__get_duras_trials_config()
         # y+100 clicks closer to center of the button instead of rate up text
         self.device.click(x, y + 100)
 
@@ -580,7 +580,7 @@ class AFKJourney(Plugin):
             return None
 
     def assist_synergy_corrupt_creature(self) -> None:
-        _, assist_limit = self.get_general_config()
+        _, assist_limit = self.__get_general_config()
         logging.info("Assisting Synergy and Corrupt Creature in world chat")
         count: int = 0
         while count < assist_limit:

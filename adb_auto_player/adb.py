@@ -1,6 +1,6 @@
 from typing import Any
 
-from adbutils import AdbClient, AdbDeviceInfo
+from adbutils import AdbClient
 from adbutils._device import AdbDevice
 
 import logging
@@ -53,15 +53,6 @@ def __connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:
     except Exception as e:
         logging.debug(f"{e}")
         return None
-
-
-def get_devices(main_config: dict[str, Any]) -> list[AdbDeviceInfo]:
-    adb_config = main_config.get("adb", {})
-    client = AdbClient(
-        host=adb_config.get("host", "127.0.0.1"),
-        port=adb_config.get("port", 5037),
-    )
-    return client.list()
 
 
 def get_currently_running_app(device: AdbDevice) -> str:

@@ -21,7 +21,7 @@ def get_plugins_dir() -> str:
     return "plugins"
 
 
-def get_plugin_list_file_location() -> str:
+def __get_plugin_list_file_location() -> str:
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return "."
@@ -36,7 +36,7 @@ def get_main_config() -> dict[str, Any]:
         return tomllib.load(f)
 
 
-def scan_plugins() -> list[dict[str, Any]]:
+def __scan_plugins() -> list[dict[str, Any]]:
     plugins = []
 
     for plugin_dir_name in os.listdir(get_plugins_dir()):
@@ -56,7 +56,7 @@ def scan_plugins() -> list[dict[str, Any]]:
     return plugins
 
 
-def generate_plugin_list_hash() -> str:
+def __generate_plugin_list_hash() -> str:
     hash_md5 = hashlib.md5()
 
     plugins_dir = get_plugins_dir()
@@ -77,19 +77,19 @@ def load_plugin_configs() -> list[dict[str, Any]]:
         with open(PLUGIN_LIST_FILE, "r") as f:
             cached_plugins = json.load(f)
 
-        if cached_plugins.get("hash") == generate_plugin_list_hash():
+        if cached_plugins.get("hash") == __generate_plugin_list_hash():
             return cast(list[dict[str, Any]], cached_plugins["plugins"])
 
-    plugins = scan_plugins()
-    create_plugin_list_file(plugins)
+    plugins = __scan_plugins()
+    __create_plugin_list_file(plugins)
 
     return plugins
 
 
-def create_plugin_list_file(plugins: list[dict[str, Any]]) -> None:
-    plugin_data = {"hash": generate_plugin_list_hash(), "plugins": plugins}
+def __create_plugin_list_file(plugins: list[dict[str, Any]]) -> None:
+    plugin_data = {"hash": __generate_plugin_list_hash(), "plugins": plugins}
 
-    with open(get_plugin_list_file_location() + "/" + PLUGIN_LIST_FILE, "w") as f:
+    with open(__get_plugin_list_file_location() + "/" + PLUGIN_LIST_FILE, "w") as f:
         json.dump(plugin_data, f, indent=4)
 
 

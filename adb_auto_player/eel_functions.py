@@ -28,7 +28,7 @@ def init() -> None:
     return None
 
 
-def get_device() -> AdbDevice | None:
+def __get_device() -> AdbDevice | None:
     global global_device
     if global_device is None:
         try:
@@ -39,10 +39,10 @@ def get_device() -> AdbDevice | None:
     return global_device
 
 
-def get_plugin() -> dict[str, Any] | None:
+def __get_plugin() -> dict[str, Any] | None:
     global global_plugin, menu_options
 
-    device = get_device()
+    device = __get_device()
     if device is None:
         return None
 
@@ -65,11 +65,11 @@ def get_plugin() -> dict[str, Any] | None:
     return global_plugin
 
 
-def get_game_object() -> Plugin | None:
-    device = get_device()
+def __get_game_object() -> Plugin | None:
+    device = __get_device()
     if device is None:
         return None
-    plugin = get_plugin()
+    plugin = __get_plugin()
     if plugin is None:
         return None
     try:
@@ -95,7 +95,7 @@ def get_game_object() -> Plugin | None:
 
 @eel.expose
 def get_running_supported_game() -> str | None:
-    plugin = get_plugin()
+    plugin = __get_plugin()
     if plugin is None:
         return None
     return plugin.get("name")
@@ -103,7 +103,7 @@ def get_running_supported_game() -> str | None:
 
 @eel.expose
 def get_editable_config() -> dict[str, Any] | None:
-    game = get_game_object()
+    game = __get_game_object()
     if game is None:
         return None
     return {"config": game.config, "choices": game.get_config_choices()}
@@ -121,14 +121,14 @@ def save_config(new_config: dict[str, Any]) -> None:
         return None
     plugin_loader.save_config_for_plugin(new_config, str(plugin.get("dir")))
     logging.info("Config saved.")
-    global_plugin = get_plugin()
+    global_plugin = __get_plugin()
     return None
 
 
 @eel.expose
 def get_menu() -> list[str] | None:
     global menu_options
-    game = get_game_object()
+    game = __get_game_object()
     if game is None:
         return None
     menu_options = game.get_menu_options()
@@ -152,7 +152,7 @@ def execute(i: int) -> None:
 
     if callable(action) and isinstance(kwargs, dict):
         action_process = Process(
-            target=run_action_in_process,
+            target=__run_action_in_process,
             args=(
                 action.__name__,
                 kwargs,
@@ -167,7 +167,7 @@ def execute(i: int) -> None:
     return None
 
 
-def run_action_in_process(
+def __run_action_in_process(
     action: str,
     kwargs: dict[str, Any],
     log_queue: multiprocessing.Queue,  # type: ignore
@@ -177,7 +177,7 @@ def run_action_in_process(
         child_logger = logging.getLogger()
         child_logger.addHandler(QueueHandler(log_queue))
         child_logger.setLevel(log_level)
-        game = get_game_object()
+        game = __get_game_object()
         if hasattr(game, action):
             action_func = getattr(game, action)
             if callable(action_func):
