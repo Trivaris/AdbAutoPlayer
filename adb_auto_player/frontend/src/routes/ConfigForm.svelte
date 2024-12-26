@@ -2,7 +2,8 @@
     let {
         config,
         choices,
-        onConfigSave
+        onConfigSave,
+        isGameConfig,
     } = $props();
 
     const configSections : Array<Dictionary<any>> = Object.entries(config)
@@ -60,7 +61,7 @@
             }
         }
 
-        window.eel.save_config(newConfig);
+        window.eel.save_config(newConfig, isGameConfig);
         onConfigSave?.();
     }
 

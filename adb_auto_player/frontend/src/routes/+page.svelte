@@ -12,6 +12,7 @@
     let buttons: { label: string, index: number, active: boolean }[] = $state([]);
     let editableConfig: any = $state(null);
     let configChoices: any = $state(null);
+    let isGameConfig: boolean = $state(false);
     let showConfigForm = $state(false);
 
     function append_to_log(message: string) {
@@ -91,7 +92,18 @@
 
     function openGameConfigForm(event: Event) {
         event.preventDefault();
+        isGameConfig = true;
         window.eel.get_editable_config()((response: any) => {
+            editableConfig = response.config;
+            configChoices = response.choices;
+            showConfigForm = true;
+        });
+    }
+
+    function openMainConfigForm(event: Event) {
+        event.preventDefault();
+        isGameConfig = false;
+        window.eel.get_editable_config(false)((response: any) => {
             editableConfig = response.config;
             configChoices = response.choices;
             showConfigForm = true;
@@ -112,7 +124,7 @@
     <h1>{game ? game : "Please start a supported game"}</h1>
 
     {#if showConfigForm}
-        <ConfigForm config={editableConfig} choices={configChoices} onConfigSave={onConfigSave} />
+        <ConfigForm config={editableConfig} choices={configChoices} onConfigSave={onConfigSave} isGameConfig={isGameConfig} />
     {:else}
         <CommandPanel title={"Menu"}>
             {#if buttons.length > 0}
@@ -133,6 +145,11 @@
                     Edit Game Config
                 </button>
             {:else}
+                <button disabled={disableActions}
+                        onclick={(event) => openMainConfigForm(event)}
+                >
+                    Edit Main Config
+                </button>
                 <button onclick={(event) => reloadConfig(event)}>
                     Reload main_config.toml
                 </button>

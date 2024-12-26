@@ -10,11 +10,11 @@ declare global {
             get_menu: () => (callback: (response: string[] | null) => void) => void;
             get_running_supported_game: () => (callback: (response: null | string) => void) => void;
             action_is_running: () => (callback: (response: boolean) => void) => void;
-            get_editable_config: () => (callback: (response: { config: any; choices: any }) => void) => void;
+            get_editable_config: (isGameConfig?: boolean) => (callback: (response: { config: any; choices: any }) => void) => void;
             execute: (index: number) => void;
             stop_action: () => void;
             reload_config: () => void;
-            save_config: (config: { [p: string]: Dictionary<any> }) => void;
+            save_config: (config: { [p: string]: Dictionary<any> }, isGameConfig: boolean) => void;
             set_host(host: string): void;
             _websocket: WebSocket;
         };
