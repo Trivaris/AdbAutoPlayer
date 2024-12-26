@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['adb_auto_player/eel_main.py'],
+    ['adb_auto_player/main.py'],
     pathex=['adb_auto_player'],
     binaries=[],
     datas=[
