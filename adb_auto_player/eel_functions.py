@@ -37,6 +37,9 @@ def __get_device() -> AdbDevice | None:
         except Exception as e:
             logging.error(f"{e}")
             return None
+
+    if not adb.is_device_connection_active(global_device):
+        global_device = None
     return global_device
 
 
@@ -136,7 +139,7 @@ def __save_main_config(new_config: dict[str, Any]) -> None:
     global main_config
     main_config = new_config
     plugin_loader.save_config(new_config)
-    logging.info("Config saved.")
+    logging.info("Config saved")
     update_logging_from_config(main_config)
     return None
 
@@ -148,13 +151,13 @@ def save_config(new_config: dict[str, Any], is_game_config: bool = True) -> None
     global global_plugin
     plugin = global_plugin
     if plugin is None:
-        logging.error("Error saving config keep the game running when changing config.")
+        logging.error("Error saving config keep the game running when changing config")
         return None
     if str(plugin.get("name")) != str(new_config.get("plugin", {}).get("name")):
-        logging.error("Error saving config keep the game running when changing config.")
+        logging.error("Error saving config keep the game running when changing config")
         return None
     plugin_loader.save_config_for_plugin(new_config, str(plugin.get("dir")))
-    logging.info("Config saved.")
+    logging.info("Config saved")
     global_plugin = __get_plugin()
     return None
 
@@ -164,7 +167,11 @@ def get_menu() -> list[str] | None:
     global menu_options
     game = __get_game_object()
     if game is None:
+        logging.info("Game closed - Displaying Main Menu")
         return None
+    game_name = game.config.get("plugin", {}).get("name")
+    if game_name is not None:
+        logging.info(f"Displaying Menu for Game: {game_name}")
     menu_options = game.get_menu_options()
     return [option.get("label", "") for option in menu_options]
 

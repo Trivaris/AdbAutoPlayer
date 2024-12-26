@@ -345,7 +345,7 @@ class AFKJourney(Plugin):
         sleep(1)
 
         if self.find_any_template_center(["spend.png", "gold.png"]) and not spend_gold:
-            logging.warning("Not spending gold returning.")
+            logging.warning("Not spending gold returning")
             self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
             self.press_back_button()
             return False

@@ -47,38 +47,46 @@ def get_device(main_config: dict[str, Any]) -> AdbDevice:
 
 def __connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:
     device = client.device(f"{device_id}")
+    if is_device_connection_active(device):
+        return device
+    else:
+        return None
+
+
+def is_device_connection_active(device: AdbDevice) -> bool:
     try:
         device.get_state()
-        return device
+        return True
     except Exception as e:
         logging.debug(f"Exception: {e}")
-        return None
+        return False
 
 
 def get_currently_running_app(device: AdbDevice) -> str:
     """
     :raises AdbException: Unable to determine currently running app
     """
-    app = str(
-        device.shell(
-            "dumpsys activity activities | grep mResumedActivity | "
-            'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
-        )
-    ).strip()
-    # Not sure why this happens
-    # encountered when running on Apple M1 Max using MuMu Player
-    if not app:
+    if is_device_connection_active(device):
         app = str(
             device.shell(
-                "dumpsys activity activities | grep ResumedActivity | "
+                "dumpsys activity activities | grep mResumedActivity | "
                 'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
             )
         ).strip()
-        if "\n" in app:
-            app = app.split("\n")[0]
-    if app:
-        logging.debug(f"Currently running app: {app}")
-        return str(app)
+        # Not sure why this happens
+        # encountered when running on Apple M1 Max using MuMu Player
+        if not app:
+            app = str(
+                device.shell(
+                    "dumpsys activity activities | grep ResumedActivity | "
+                    'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
+                )
+            ).strip()
+            if "\n" in app:
+                app = app.split("\n")[0]
+        if app:
+            logging.debug(f"Currently running app: {app}")
+            return str(app)
     raise AdbException("Unable to determine the currently running app")
 
 
