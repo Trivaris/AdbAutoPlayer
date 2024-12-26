@@ -11,7 +11,7 @@ def get_device(main_config: dict[str, Any]) -> AdbDevice:
     """
     :raises AdbException: Device not found
     """
-    device_id = main_config.get("device", {}).get("id", "127.0.0.1:5555")
+    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5554")
     adb_config = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
@@ -51,7 +51,7 @@ def __connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:
         device.get_state()
         return device
     except Exception as e:
-        logging.debug(f"{e}")
+        logging.debug(f"Exception: {e}")
         return None
 
 

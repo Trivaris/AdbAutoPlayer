@@ -139,3 +139,12 @@ def get_plugin_for_app(
         if app in plugin.get("packages", {}):
             return plugin
     return None
+
+
+def save_config(config: dict[str, Any]) -> None:
+    if getattr(sys, "frozen", False):
+        config_file = os.path.join(os.path.dirname(sys.executable), MAIN_CONFIG_FILE)
+    else:
+        config_file = MAIN_CONFIG_FILE
+    with open(config_file, "w") as f:
+        toml.dump(config, f)

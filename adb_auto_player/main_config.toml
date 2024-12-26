@@ -1,9 +1,9 @@
 [device]
-id = 'emulator-5554'
+ID = "emulator-5554"
 
 [adb]
-host = '127.0.0.1'
+host = "127.0.0.1"
 port = 5037
 
 [logging]
-level = 'INFO'
+level = "INFO"

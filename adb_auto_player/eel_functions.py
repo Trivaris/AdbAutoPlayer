@@ -13,6 +13,7 @@ import adb_auto_player.adb as adb
 import adb_auto_player.plugin_loader as plugin_loader
 from adb_auto_player import logging_setup
 from adb_auto_player.exceptions import AdbException
+from adb_auto_player.logging_setup import update_logging_from_config
 from adb_auto_player.plugin import Plugin
 
 main_config = plugin_loader.get_main_config()
@@ -29,7 +30,7 @@ def init() -> None:
 
 
 def __get_device() -> AdbDevice | None:
-    global global_device
+    global global_device, main_config
     if global_device is None:
         try:
             global_device = adb.get_device(main_config)
@@ -101,16 +102,49 @@ def get_running_supported_game() -> str | None:
     return plugin.get("name")
 
 
+def __get_editable_main_config() -> dict[str, Any] | None:
+    global main_config
+    game = __get_game_object()
+    if game is not None:
+        return None
+    return {
+        "config": main_config,
+        "choices": {
+            "logging": {
+                "level": [
+                    "DEBUG",
+                    "INFO",
+                    "WARNING",
+                    "ERROR",
+                ],
+            },
+        },
+    }
+
+
 @eel.expose
-def get_editable_config() -> dict[str, Any] | None:
+def get_editable_config(is_game_config: bool = True) -> dict[str, Any] | None:
+    if not is_game_config:
+        return __get_editable_main_config()
     game = __get_game_object()
     if game is None:
         return None
     return {"config": game.config, "choices": game.get_config_choices()}
 
 
+def __save_main_config(new_config: dict[str, Any]) -> None:
+    global main_config
+    main_config = new_config
+    plugin_loader.save_config(new_config)
+    logging.info("Config saved.")
+    update_logging_from_config(main_config)
+    return None
+
+
 @eel.expose
-def save_config(new_config: dict[str, Any]) -> None:
+def save_config(new_config: dict[str, Any], is_game_config: bool = True) -> None:
+    if not is_game_config:
+        return __save_main_config(new_config)
     global global_plugin
     plugin = global_plugin
     if plugin is None:
@@ -206,10 +240,3 @@ def stop_action() -> None:
 @eel.expose
 def shutdown() -> NoReturn:
     sys.exit(0)
-
-
-@eel.expose
-def reload_config() -> None:
-    global main_config, global_device
-    main_config = plugin_loader.get_main_config()
-    global_device = None

@@ -23,7 +23,7 @@
         const logEntry = document.createElement('div');
         logEntry.style.color = 'white';
         if (message.includes('[DEBUG]')) {
-            logEntry.style.color = 'blue';
+            logEntry.style.color = 'cyan';
         } else if (message.includes('[INFO]')) {
             logEntry.style.color = 'green';
         } else if (message.includes('[WARNING]')) {
@@ -54,6 +54,9 @@
     }
 
     function updateState() {
+        if (showConfigForm) {
+            return;
+        }
         if (disableActions) {
             window.eel.action_is_running()((response: boolean) => {
                 disableActions = response;
@@ -110,11 +113,6 @@
         });
     }
 
-    function reloadConfig(event: Event) {
-        event.preventDefault();
-        window.eel.reload_config();
-    }
-
     function onConfigSave() {
         showConfigForm = false;
     }
@@ -149,9 +147,6 @@
                         onclick={(event) => openMainConfigForm(event)}
                 >
                     Edit Main Config
-                </button>
-                <button onclick={(event) => reloadConfig(event)}>
-                    Reload main_config.toml
                 </button>
             {/if}
         </CommandPanel>

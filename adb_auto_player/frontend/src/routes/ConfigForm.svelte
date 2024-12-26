@@ -35,7 +35,6 @@
         const formElement = document.querySelector('form.config-form') as HTMLFormElement;
         const formData = new FormData(formElement);
         const newConfig: { [key: string]: Dictionary<any> } = JSON.parse(JSON.stringify(config));
-
         for (const [sectionKey, sectionConfig] of Object.entries(newConfig)) {
             if (sectionKey === 'plugin') continue;
 
@@ -56,6 +55,7 @@
                         }
                         break;
                     default:
+                        sectionConfig[key] = formData.get(inputName);
                         break;
                 }
             }
@@ -126,12 +126,23 @@
                                     {/each}
                                 </div>
                             {:else}
-                                <input
-                                        type="text"
-                                        id="{sectionKey}-{key}"
-                                        name="{sectionKey}-{key}"
-                                        value={value}
-                                />
+                                {#if Array.isArray(choices[sectionKey]?.[key])}
+                                    <select
+                                            id="{sectionKey}-{key}"
+                                            name="{sectionKey}-{key}"
+                                    >
+                                        {#each choices[sectionKey]?.[key] as option}
+                                            <option value={option} selected={value === option}>{option}</option>
+                                        {/each}
+                                    </select>
+                                {:else}
+                                    <input
+                                            type="text"
+                                            id="{sectionKey}-{key}"
+                                            name="{sectionKey}-{key}"
+                                            value={value}
+                                    />
+                                {/if}
                             {/if}
                         </div>
                     </div>
@@ -180,6 +191,10 @@
     }
 
     .input-container input:not([type="checkbox"]) {
+        width: 100%;
+    }
+
+    .input-container select {
         width: 100%;
     }
 
