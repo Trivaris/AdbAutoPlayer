@@ -7,6 +7,7 @@
 
 - **Auto Battle**: Retries the current battle repeatedly until it is cleared.
 
+- **Assist Synergy & CC**: For Guild Quest and Pal-Coins
 ---
 
 ## Upcoming/Pending Features
@@ -18,19 +19,17 @@
 > **Note**: Use the Edit Game Config button in the GUI to change the config!
 
 Configuration can be found under `plugins/AFKJourney/config.toml`.  
-Configuration is only loaded once when the App starts you need to restart it to apply changes.
+Configuration is only loaded once when the App starts or the config is updated via the GUI if you change it directly you need to restart it to apply changes.
 
 ### [general]
 
-- **excluded_heroes**:  
-  - Formations using any Hero listed here will be skipped.
-  - Be cautious when directly modifying this list, as adding any hero without proper formatting may crash the app.
+- **excluded_heroes**: Formations using any Hero selected will be skipped.
 
 - **assist_limit**: After how many Synergy or CC assists to stop.
 ---
 
 ### [afk_stages]
-> **Note**: If a setting does not exist for a mode it will always use the afk_stages config as default!
+> **Note**: Auto Battle also uses afk_stages config.
 
 - **attempts**: Specifies how many times to attempt each formation.
 
@@ -38,7 +37,7 @@ Configuration is only loaded once when the App starts you need to restart it to 
 
 - **use_suggested_formations**: 
   - `true`: Uses suggested formations from the `Records` button.
-  - `false`: Uses your currently setup formation.
+  - `false`: Uses your current formation.
 
 - **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
 

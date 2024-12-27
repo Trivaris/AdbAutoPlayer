@@ -153,7 +153,6 @@ class AFKJourney(Plugin):
         config = self.config.get(self.CONFIG_GENERAL, {})
         excluded_heroes: list[str] = config.get("excluded_heroes", [])
         assist_limit = int(config.get("attempts", 20))
-        assist_limit = min(assist_limit, 20)
         assist_limit = max(assist_limit, 1)
         return excluded_heroes, assist_limit
 
@@ -161,11 +160,9 @@ class AFKJourney(Plugin):
         config = self.config.get(self.CONFIG_AFK_STAGES, {})
 
         attempts = int(config.get("attempts", 5))
-        attempts = min(attempts, 100)
         attempts = max(attempts, 1)
 
         formations = int(config.get("formations", 7))
-        formations = min(formations, 7)
         formations = max(formations, 1)
 
         use_suggested_formations = bool(config.get("use_suggested_formations", True))
@@ -177,11 +174,9 @@ class AFKJourney(Plugin):
         config = self.config.get(self.CONFIG_DURAS_TRIALS, {})
 
         attempts = int(config.get("attempts", 2))
-        attempts = min(attempts, 100)
         attempts = max(attempts, 1)
 
         formations = int(config.get("formations", 7))
-        formations = min(formations, 7)
         formations = max(formations, 1)
 
         spend_gold = bool(config.get("spend_gold", False))

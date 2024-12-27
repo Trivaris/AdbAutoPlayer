@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
+  import LogDisplay from "./LogDisplay.svelte";
 
   let disableActions: boolean = $state(false);
   $effect(() => {
@@ -14,28 +15,10 @@
   let configConstraints: Record<string, any> = $state({});
   let isGameConfig: boolean = $state(false);
   let showConfigForm: boolean = $state(false);
+  let log: string[] = $state([]);
 
   function append_to_log(message: string) {
-    const log = document.getElementById("log") as HTMLDivElement | null;
-    if (log === null) {
-      return;
-    }
-    const logEntry = document.createElement("div");
-    logEntry.style.color = "white";
-    if (message.includes("[DEBUG]")) {
-      logEntry.style.color = "cyan";
-    } else if (message.includes("[INFO]")) {
-      logEntry.style.color = "green";
-    } else if (message.includes("[WARNING]")) {
-      logEntry.style.color = "yellow";
-    } else if (message.includes("[ERROR]")) {
-      logEntry.style.color = "red";
-    } else if (message.includes("[CRITICAL]")) {
-      logEntry.style.color = "darkred";
-    }
-    logEntry.textContent = message;
-    log.appendChild(logEntry);
-    log.scrollTop = log.scrollHeight;
+    log.push(message);
   }
   window.eel.expose(append_to_log);
 
@@ -97,20 +80,9 @@
     window.eel.stop_action();
   }
 
-  function openGameConfigForm(event: Event) {
-    event.preventDefault();
-    isGameConfig = true;
-    window.eel.get_editable_config()((response: any) => {
-      editableConfig = response.config;
-      configConstraints = response.constraints;
-      showConfigForm = true;
-    });
-  }
-
-  function openMainConfigForm(event: Event) {
-    event.preventDefault();
-    isGameConfig = false;
-    window.eel.get_editable_config(false)((response: any) => {
+  function openConfigForm({ openGameConfig }: { openGameConfig: boolean }) {
+    isGameConfig = openGameConfig;
+    window.eel.get_editable_config(isGameConfig)((response: any) => {
       editableConfig = response.config;
       configConstraints = response.constraints;
       showConfigForm = true;
@@ -147,14 +119,14 @@
         <button onclick={(event) => stopAction(event)}> Stop Action </button>
         <button
           disabled={disableActions}
-          onclick={(event) => openGameConfigForm(event)}
+          onclick={() => openConfigForm({ openGameConfig: true })}
         >
           Edit Game Config
         </button>
       {:else}
         <button
           disabled={disableActions}
-          onclick={(event) => openMainConfigForm(event)}
+          onclick={() => openConfigForm({ openGameConfig: false })}
         >
           Edit Main Config
         </button>
@@ -163,7 +135,7 @@
   {/if}
 
   <CommandPanel title={"Logs"}>
-    <div id="log" class="log-container"></div>
+    <LogDisplay {log} />
   </CommandPanel>
 </main>
 
@@ -175,17 +147,6 @@
     flex-direction: column;
     justify-content: center;
     text-align: center;
-  }
-
-  .log-container {
-    height: 200px;
-    overflow-y: auto;
-    background-color: #0f0f0f98;
-    padding: 10px;
-    resize: vertical;
-    white-space: pre-wrap;
-    text-align: left;
-    font-family: Consolas, monospace;
   }
 
   button {
