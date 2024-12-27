@@ -144,11 +144,12 @@ def get_editable_config(is_game_config: bool = True) -> dict[str, Any] | None:
 
 
 def __save_main_config(new_config: dict[str, Any]) -> None:
-    global main_config
+    global main_config, global_device
     main_config = new_config
     plugin_loader.save_config(new_config)
     logging.info("Config saved")
     update_logging_from_config(main_config)
+    global_device = None
     return None
 
 

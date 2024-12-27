@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
+
     let {
         config,
         constraints,
@@ -13,11 +15,10 @@
             sectionConfig
         }));
 
-    function getInputType(value: any): string {
-        if (typeof value === 'boolean') return 'checkbox';
-        if (typeof value === 'number') return 'number';
-        if (Array.isArray(value)) return 'multicheckbox';
-        return 'text';
+    function getInputType(sectionKey: string, key: string): string {
+        const constraint = constraints[sectionKey]?.[key];
+        if (!constraint) return 'text';
+        return constraint.type ?? 'text';
     }
 
     function groupOptionsByFirstLetter(options: string[]): Record<string, string[]> {
@@ -33,8 +34,15 @@
 
     function handleSave() {
         const formElement = document.querySelector('form.config-form') as HTMLFormElement;
+
+        if (!formElement.checkValidity()) {
+            formElement.reportValidity()
+            return;
+        }
+
         const formData = new FormData(formElement);
         const newConfig: { [key: string]: Dictionary<any> } = JSON.parse(JSON.stringify(config));
+
         for (const [sectionKey, sectionConfig] of Object.entries(newConfig)) {
             if (sectionKey === 'plugin') continue;
 
@@ -69,9 +77,29 @@
         const withSpaces = sectionKey.replace(/_/g, ' ');
         return withSpaces.replace(/\b\w/g, (match) => match.toUpperCase());
     }
+
+    function setupRealTimeValidation() {
+        const formElement = document.getElementById('config-form') as HTMLFormElement;
+        if (!formElement) {
+            console.error("Form element not found.");
+            return;
+        }
+        const inputs = formElement.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if (!input.checkValidity()) {
+                    input.reportValidity();
+                }
+            });
+        });
+    }
+
+    onMount(() => {
+        setupRealTimeValidation();
+    });
 </script>
 
-<form class="config-form">
+<form class="config-form" id="config-form">
     <h2>{#if isGameConfig}Edit Game Config{:else}Edit Main Config{/if}</h2>
 
     {#each configSections as { sectionKey, sectionConfig } }
@@ -86,25 +114,26 @@
                         </label>
 
                         <div class="input-container">
-                            {#if getInputType(value) === 'checkbox'}
+                            {#if getInputType(sectionKey, key) === 'checkbox'}
                                 <input
                                         type="checkbox"
                                         id="{sectionKey}-{key}"
                                         name="{sectionKey}-{key}"
                                         checked={Boolean(value)}
                                 />
-                            {:else if getInputType(value) === 'number'}
+                            {:else if getInputType(sectionKey, key) === 'number'}
                                 <input
                                         type="number"
                                         id="{sectionKey}-{key}"
                                         name="{sectionKey}-{key}"
                                         value={value}
-                                        min="1"
+                                        min={constraints[sectionKey]?.[key]?.minimum ?? 1}
+                                        max={constraints[sectionKey]?.[key]?.maximum ?? 999}
                                 />
-                            {:else if getInputType(value) === 'multicheckbox'}
-                                {@const groupedOptions = groupOptionsByFirstLetter(constraints[sectionKey]?.[key] || [])}
+                            {:else if getInputType(sectionKey, key) === 'multicheckbox'}
+                                {@const groupedOptions = groupOptionsByFirstLetter(constraints[sectionKey]?.[key]?.choices || [])}
                                 <div class="multicheckbox-grouped">
-                                    {#each Object.entries(groupedOptions) as [letter, options]}
+                                    {#each Object.entries(groupedOptions) as [letter, options] }
                                         <div class="letter-group">
                                             <div class="letter-header">{letter}</div>
                                             <div class="letter-options">
@@ -114,9 +143,7 @@
                                                                 type="checkbox"
                                                                 name="{sectionKey}-{key}"
                                                                 value={option}
-                                                                checked={
-                                                                    Array.isArray(value) ? value.includes(option) : false
-                                                                }
+                                                                checked={Array.isArray(value) ? value.includes(option) : false}
                                                         />
                                                         {option}
                                                     </label>
@@ -125,24 +152,22 @@
                                         </div>
                                     {/each}
                                 </div>
+                            {:else if getInputType(sectionKey, key) === 'select'}
+                                <select
+                                        id="{sectionKey}-{key}"
+                                        name="{sectionKey}-{key}"
+                                >
+                                    {#each constraints[sectionKey]?.[key]?.choices as option}
+                                        <option value={option} selected={value === option}>{option}</option>
+                                    {/each}
+                                </select>
                             {:else}
-                                {#if Array.isArray(constraints[sectionKey]?.[key])}
-                                    <select
-                                            id="{sectionKey}-{key}"
-                                            name="{sectionKey}-{key}"
-                                    >
-                                        {#each constraints[sectionKey]?.[key] as option}
-                                            <option value={option} selected={value === option}>{option}</option>
-                                        {/each}
-                                    </select>
-                                {:else}
-                                    <input
-                                            type="text"
-                                            id="{sectionKey}-{key}"
-                                            name="{sectionKey}-{key}"
-                                            value={value}
-                                    />
-                                {/if}
+                                <input
+                                        type="text"
+                                        id="{sectionKey}-{key}"
+                                        name="{sectionKey}-{key}"
+                                        value={value}
+                                />
                             {/if}
                         </div>
                     </div>
