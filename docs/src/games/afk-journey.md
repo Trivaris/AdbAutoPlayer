@@ -26,53 +26,37 @@ Configuration is only loaded once when the App starts you need to restart it to 
   - Formations using any Hero listed here will be skipped.
   - Be cautious when directly modifying this list, as adding any hero without proper formatting may crash the app.
 
+- **assist_limit**: After how many Synergy or CC assists to stop.
 ---
 
 ### [afk_stages]
 > **Note**: If a setting does not exist for a mode it will always use the afk_stages config as default!
 
 - **attempts**: Specifies how many times to attempt each formation.
-  - Min: `1`
-  - Max: `100`
-  - Default: `5`
 
 - **formations**: Defines the number of suggested formations to copy.
-  - Min: `1`
-  - Max: `7`
-  - Default: `7`
 
 - **use_suggested_formations**: 
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your currently setup formation.
-  - Default: `true`
 
 - **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
-  - Default: `true`
 
 ---
 
 ### [duras_trials]
 
 - **attempts**: Specifies how many times to attempt each formation.
-  - Min: `1`
-  - Max: `100`
-  - Default: `2`
 
 - **formations**: Defines the number of suggested formations to copy.
-  - Min: `1`
-  - Max: `7`
-  - Default: `7`
 
 - **use_suggested_formations**: 
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your currently setup formation.
-  - Default: `true`
 
 - **spend_gold**: 
   - `true`: Gold will be spent to continue retrying after failure.
-  - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
-  - Default: `false`
 
 ---
 

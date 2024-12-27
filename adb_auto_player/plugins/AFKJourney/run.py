@@ -1,9 +1,8 @@
 import os.path
 from time import sleep
 from typing import Any
-
 import logging
-
+import adb_auto_player.config_constraint as constraints
 from adb_auto_player.exceptions import TimeoutException
 from adb_auto_player.plugin import Plugin
 from adb_auto_player.plugin_loader import get_plugins_dir
@@ -127,9 +126,26 @@ class AFKJourney(Plugin):
             # },
         ]
 
-    def get_config_choices(self) -> dict[str, Any]:
+    def get_config_constraints(self) -> dict[str, constraints.ConfigConstraintType]:
         return {
-            "general": {"excluded_heroes": self.EXCLUDED_HEROES_CHOICES},
+            "general": {
+                "excluded_heroes": constraints.create_multi_checkbox_constraint(
+                    choices=self.EXCLUDED_HEROES_CHOICES
+                ),
+                "assist_limit": constraints.create_number_constraint(),
+            },
+            "afk_stages": {
+                "attempts": constraints.create_number_constraint(),
+                "formations": constraints.create_number_constraint(maximum=7),
+                "use_suggested_formations": constraints.create_checkbox_constraint(),
+                "push_both_modes": constraints.create_checkbox_constraint(),
+            },
+            "duras_trials": {
+                "attempts": constraints.create_number_constraint(),
+                "formations": constraints.create_number_constraint(maximum=7),
+                "use_suggested_formations": constraints.create_checkbox_constraint(),
+                "spend_gold": constraints.create_checkbox_constraint(),
+            },
         }
 
     def __get_general_config(self) -> tuple[list[str], int]:

@@ -1,7 +1,7 @@
 <script lang="ts">
     let {
         config,
-        choices,
+        constraints,
         onConfigSave,
         isGameConfig,
     } = $props();
@@ -102,7 +102,7 @@
                                         min="1"
                                 />
                             {:else if getInputType(value) === 'multicheckbox'}
-                                {@const groupedOptions = groupOptionsByFirstLetter(choices[sectionKey]?.[key] || [])}
+                                {@const groupedOptions = groupOptionsByFirstLetter(constraints[sectionKey]?.[key] || [])}
                                 <div class="multicheckbox-grouped">
                                     {#each Object.entries(groupedOptions) as [letter, options]}
                                         <div class="letter-group">
@@ -126,12 +126,12 @@
                                     {/each}
                                 </div>
                             {:else}
-                                {#if Array.isArray(choices[sectionKey]?.[key])}
+                                {#if Array.isArray(constraints[sectionKey]?.[key])}
                                     <select
                                             id="{sectionKey}-{key}"
                                             name="{sectionKey}-{key}"
                                     >
-                                        {#each choices[sectionKey]?.[key] as option}
+                                        {#each constraints[sectionKey]?.[key] as option}
                                             <option value={option} selected={value === option}>{option}</option>
                                         {/each}
                                     </select>

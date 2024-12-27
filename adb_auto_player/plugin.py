@@ -9,6 +9,7 @@ from adbutils._device import AdbDevice
 import adb_auto_player.adb as adb
 import logging
 import adb_auto_player.screen_utils as screen_utils
+from adb_auto_player.config_constraint import ConfigConstraintType
 from adb_auto_player.exceptions import UnsupportedResolutionException, TimeoutException
 
 
@@ -23,7 +24,7 @@ class Plugin:
         return ""
 
     @abstractmethod
-    def get_config_choices(self) -> dict[str, Any]:
+    def get_config_constraints(self) -> dict[str, ConfigConstraintType]:
         return {}
 
     @abstractmethod

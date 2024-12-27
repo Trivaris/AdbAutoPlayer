@@ -11,7 +11,7 @@
     let games: string[] | null = $state(null);
     let buttons: { label: string, index: number, active: boolean }[] = $state([]);
     let editableConfig: any = $state(null);
-    let configChoices: any = $state(null);
+    let configConstraints: any = $state(null);
     let isGameConfig: boolean = $state(false);
     let showConfigForm = $state(false);
 
@@ -98,7 +98,7 @@
         isGameConfig = true;
         window.eel.get_editable_config()((response: any) => {
             editableConfig = response.config;
-            configChoices = response.choices;
+            configConstraints = response.constraints;
             showConfigForm = true;
         });
     }
@@ -108,7 +108,7 @@
         isGameConfig = false;
         window.eel.get_editable_config(false)((response: any) => {
             editableConfig = response.config;
-            configChoices = response.choices;
+            configConstraints = response.constraints;
             showConfigForm = true;
         });
     }
@@ -122,7 +122,7 @@
     <h1>{game ? game : "Please start a supported game"}</h1>
 
     {#if showConfigForm}
-        <ConfigForm config={editableConfig} choices={configChoices} onConfigSave={onConfigSave} isGameConfig={isGameConfig} />
+        <ConfigForm config={editableConfig} constraints={configConstraints} onConfigSave={onConfigSave} isGameConfig={isGameConfig} />
     {:else}
         <CommandPanel title={"Menu"}>
             {#if buttons.length > 0}

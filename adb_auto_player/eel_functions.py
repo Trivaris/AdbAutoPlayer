@@ -11,6 +11,7 @@ from adbutils._device import AdbDevice
 import adb_auto_player.adb as adb
 import adb_auto_player.plugin_loader as plugin_loader
 from adb_auto_player import logging_setup
+import adb_auto_player.config_constraint as constraints
 from adb_auto_player.exceptions import AdbException
 from adb_auto_player.logging_setup import update_logging_from_config
 from adb_auto_player.main import close
@@ -105,21 +106,28 @@ def get_running_supported_game() -> str | None:
     return plugin.get("name")
 
 
-def __get_editable_main_config() -> dict[str, Any] | None:
+def __get_editable_main_config() -> dict[str, constraints.ConfigConstraintType] | None:
     global main_config
     game = __get_game_object()
     if game is not None:
         return None
     return {
         "config": main_config,
-        "choices": {
+        "constraints": {
+            "adb": {
+                "port": constraints.create_number_constraint(
+                    minimum=1024, maximum=65535
+                ),
+            },
             "logging": {
-                "level": [
-                    "DEBUG",
-                    "INFO",
-                    "WARNING",
-                    "ERROR",
-                ],
+                "level": constraints.create_select_constraint(
+                    choices=[
+                        "DEBUG",
+                        "INFO",
+                        "WARNING",
+                        "ERROR",
+                    ]
+                ),
             },
         },
     }
@@ -132,7 +140,7 @@ def get_editable_config(is_game_config: bool = True) -> dict[str, Any] | None:
     game = __get_game_object()
     if game is None:
         return None
-    return {"config": game.config, "choices": game.get_config_choices()}
+    return {"config": game.config, "constraints": game.get_config_constraints()}
 
 
 def __save_main_config(new_config: dict[str, Any]) -> None:
