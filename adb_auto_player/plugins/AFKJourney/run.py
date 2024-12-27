@@ -40,6 +40,7 @@ class AFKJourney(Plugin):
         "Harak",
         "Hewynn",
         "Hodgkin",
+        "Hugin",
         "Igor",
         "Kafra",
         "Koko",
