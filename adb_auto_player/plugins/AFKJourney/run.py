@@ -337,11 +337,17 @@ class AFKJourney(Plugin):
                 continue
 
             template, x, y = self.wait_for_any_template(
-                ["result.png", "continue.png"],
+                ["result.png", "continue.png", "confirm.png"],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
             match template:
+                case "confirm.png":
+                    logging.warning("Battle data differs between client and server")
+                    self.device.click(*template)
+                    sleep(3)
+                    self.__select_afk_stage()
+                    return False
                 case "result.png":
                     self.device.click(950, 1800)
                     return True
@@ -403,11 +409,17 @@ class AFKJourney(Plugin):
                 return False
 
             template, x, y = self.wait_for_any_template(
-                ["next.png", "first_clear.png", "retry.png"],
+                ["next.png", "first_clear.png", "retry.png", "confirm.png"],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
             match template:
+                case "confirm.png":
+                    logging.warning("Battle data differs between client and server")
+                    self.device.click(*template)
+                    sleep(3)
+                    self.__select_afk_stage()
+                    return False
                 case "next.png" | "first_clear.png":
                     return True
                 case "retry.png":
