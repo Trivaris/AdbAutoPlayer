@@ -18,7 +18,7 @@ LATEST_RELEASE_JSON: dict[str, Any] | None = None
 
 def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        path = Path(sys._MEIPASS) # type: ignore
+        path = Path(sys._MEIPASS).parent # type: ignore
     else:
         path = Path.cwd()
     logging.debug(f"Project dir: {path}")
@@ -27,7 +27,7 @@ def __get_project_dir() -> Path:
 
 def __get_pyproject_toml_path() -> Path:
     if getattr(sys, "frozen", False):
-        return __get_project_dir() / "pyproject.toml"
+        return __get_project_dir() / "_internal" /"pyproject.toml"
     else:
         return  Path.cwd().parent / "pyproject.toml"
 

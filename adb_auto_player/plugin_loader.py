@@ -17,7 +17,7 @@ MAIN_CONFIG_FILE = "main_config.toml"
 
 def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        path = Path(sys._MEIPASS) # type: ignore
+        path = Path(sys._MEIPASS).parent # type: ignore
     else:
         path = Path.cwd()
     logging.debug(f"Project dir: {path}")
@@ -69,7 +69,7 @@ def __generate_plugin_list_hash() -> str:
 def load_plugin_configs() -> list[dict[str, Any]]:
     path = __get_project_dir() / PLUGIN_LIST_FILE
     if path.exists():
-        with open(PLUGIN_LIST_FILE, "r") as f:
+        with open(path, "r") as f:
             cached_plugins = json.load(f)
 
         if cached_plugins.get("hash") == __generate_plugin_list_hash():

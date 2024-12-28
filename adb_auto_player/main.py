@@ -17,6 +17,7 @@ from adb_auto_player.logging_setup import (
 )
 import psutil
 import platform
+from pathlib import Path
 
 ADB_WAS_RUNNING: bool = True
 
@@ -54,7 +55,7 @@ def init_eel() -> None:
     eel_functions.init()
     if getattr(sys, "frozen", False):
         path = Path(sys._MEIPASS) / "frontend" / "build"  # type: ignore
-        eel.init(path, [".svelte", ".html", ".js"])
+        eel.init(str(path), [".svelte", ".html", ".js"])
     else:
         eel.init("frontend/src", [".svelte"])
 
