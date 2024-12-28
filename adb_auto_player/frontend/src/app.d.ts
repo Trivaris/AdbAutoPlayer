@@ -16,7 +16,7 @@ declare global {
       ) => (
         callback: (response: { config: any; choices: any }) => void,
       ) => void;
-      execute: (index: number) => void;
+      execute: (actionIndex: number) => void;
       stop_action: () => void;
       save_config: (config: Record<string, any>, isGameConfig: boolean) => void;
       set_host(host: string): void;

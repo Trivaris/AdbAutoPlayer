@@ -14,30 +14,21 @@
     isGameConfig: boolean;
   } = $props();
 
-  const configSections: Array<Record<string, any>> = Object.entries(config)
-    .filter(([key]) => key !== "plugin")
-    .map(([sectionKey, sectionConfig]) => ({
-      sectionKey,
-      sectionConfig,
-    }));
+  const configSections: Array<Record<string, any>> = $derived(
+    Object.entries(config)
+      .filter(([key]) => key !== "plugin")
+      .map(([sectionKey, sectionConfig]) => ({
+        sectionKey,
+        sectionConfig,
+      })),
+  );
 
   function getInputType(sectionKey: string, key: string): string {
     const constraint = constraints[sectionKey]?.[key];
-    if (!constraint) return "text";
-    return constraint.type ?? "text";
+    return constraint?.type ?? "text";
   }
 
-  function handleSave() {
-    const formElement = document.querySelector(
-      "form.config-form",
-    ) as HTMLFormElement;
-
-    if (!formElement.checkValidity()) {
-      formElement.reportValidity();
-      return;
-    }
-
-    const formData = new FormData(formElement);
+  function processFormData(formData: FormData): Record<string, any> {
     const newConfig: { [key: string]: Record<string, any> } = JSON.parse(
       JSON.stringify(config),
     );
@@ -68,7 +59,22 @@
       }
     }
 
-    window.eel.save_config(newConfig, isGameConfig);
+    return newConfig;
+  }
+
+  function handleSave(): void {
+    const formElement = document.querySelector(
+      "form.config-form",
+    ) as HTMLFormElement;
+
+    if (!formElement.checkValidity()) {
+      formElement.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(formElement);
+
+    window.eel.save_config(processFormData(formData), isGameConfig);
     onConfigSave?.();
   }
 

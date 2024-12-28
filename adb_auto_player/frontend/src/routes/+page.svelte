@@ -1,21 +1,28 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
   import LogDisplay from "./LogDisplay.svelte";
+  import Menu from "./Menu.svelte";
 
   let disableActions: boolean = $state(false);
   $effect(() => {
     window.imageIsActive(!disableActions);
   });
   let game: string | null = $state(null);
-  let games: string[] | null = $state(null);
-  let buttons: { label: string; index: number; active: boolean }[] = $state([]);
-  let editableConfig: Record<string, any> = $state({});
-  let configConstraints: Record<string, any> = $state({});
+  let buttons: Button[] = $state([]);
+  let configFormProps: Record<string, any> = $state({});
   let isGameConfig: boolean = $state(false);
   let showConfigForm: boolean = $state(false);
   let log: string[] = $state([]);
+
+  const defaultButtons: Button[] = [
+    {
+      label: "Edit Main Config",
+      callback: () => openConfigForm({ openGameConfig: false }),
+      active: false,
+    },
+  ];
 
   function append_to_log(message: string) {
     log.push(message);
@@ -24,22 +31,57 @@
 
   function updateMenu() {
     window.eel.get_menu()((response: string[] | null) => {
-      if (JSON.stringify(games) !== JSON.stringify(response)) {
-        games = response;
-
-        buttons = [];
-
-        if (games !== null) {
-          buttons = games.map((gameName, index) => ({
-            label: gameName,
-            index,
+      if (response !== null) {
+        buttons = response.map((label, index) => ({
+          label: label,
+          callback: () => executeMenuItem(index),
+          active: false,
+        }));
+        buttons.push(
+          {
+            label: "Edit Game Config",
+            callback: () => openConfigForm({ openGameConfig: true }),
             active: false,
-          }));
-        }
+          },
+          {
+            label: "Stop Action",
+            callback: () => window.eel.stop_action(),
+            active: false,
+            alwaysEnabled: true,
+          },
+        );
+      } else {
+        buttons = [];
       }
     });
   }
 
+  function executeMenuItem(actionIndex: number): void {
+    if (buttons) {
+      buttons = buttons.map((button, i) => ({
+        ...button,
+        active: i === actionIndex,
+      }));
+    }
+    disableActions = true;
+    window.eel.execute(actionIndex);
+  }
+
+  function openConfigForm({ openGameConfig }: { openGameConfig: boolean }) {
+    isGameConfig = openGameConfig;
+    window.eel.get_editable_config(isGameConfig)((response: any) => {
+      configFormProps = response;
+      editableConfig = response.config;
+      configConstraints = response.constraints;
+      showConfigForm = true;
+    });
+  }
+
+  function onConfigSave() {
+    showConfigForm = false;
+  }
+
+  let updateStateTimeout: number | undefined;
   function updateState() {
     if (showConfigForm) {
       return;
@@ -56,42 +98,16 @@
         }
       });
     }
+    updateStateTimeout = setTimeout(updateState, 1000);
   }
 
   onMount(() => {
     updateState();
-    setInterval(updateState, 3000);
   });
 
-  function executeMenuItem(event: Event, index: number) {
-    event.preventDefault();
-    if (buttons) {
-      buttons = buttons.map((button, i) => ({
-        ...button,
-        active: i === index,
-      }));
-    }
-    disableActions = true;
-    window.eel.execute(index);
-  }
-
-  function stopAction(event: Event) {
-    event.preventDefault();
-    window.eel.stop_action();
-  }
-
-  function openConfigForm({ openGameConfig }: { openGameConfig: boolean }) {
-    isGameConfig = openGameConfig;
-    window.eel.get_editable_config(isGameConfig)((response: any) => {
-      editableConfig = response.config;
-      configConstraints = response.constraints;
-      showConfigForm = true;
-    });
-  }
-
-  function onConfigSave() {
-    showConfigForm = false;
-  }
+  onDestroy(() => {
+    clearTimeout(updateStateTimeout);
+  });
 </script>
 
 <main class="container">
@@ -99,38 +115,14 @@
 
   {#if showConfigForm}
     <ConfigForm
-      config={editableConfig}
-      constraints={configConstraints}
+      config={configFormProps.config ?? []}
+      constraints={configFormProps.constraints ?? []}
       {onConfigSave}
       {isGameConfig}
     />
   {:else}
     <CommandPanel title={"Menu"}>
-      {#if buttons.length > 0}
-        {#each buttons as { label, index, active }}
-          <button
-            disabled={disableActions}
-            class:active
-            onclick={(event) => executeMenuItem(event, index)}
-          >
-            {label}
-          </button>
-        {/each}
-        <button onclick={(event) => stopAction(event)}> Stop Action </button>
-        <button
-          disabled={disableActions}
-          onclick={() => openConfigForm({ openGameConfig: true })}
-        >
-          Edit Game Config
-        </button>
-      {:else}
-        <button
-          disabled={disableActions}
-          onclick={() => openConfigForm({ openGameConfig: false })}
-        >
-          Edit Main Config
-        </button>
-      {/if}
+      <Menu {buttons} {defaultButtons} {disableActions}></Menu>
     </CommandPanel>
   {/if}
 
@@ -147,24 +139,5 @@
     flex-direction: column;
     justify-content: center;
     text-align: center;
-  }
-
-  button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 1em;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s ease-in-out;
-  }
-
-  button:disabled.active {
-    opacity: 1;
-    outline: 2px solid #396cd8;
-  }
-
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
   }
 </style>

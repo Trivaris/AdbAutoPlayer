@@ -1,5 +1,13 @@
 <script lang="ts">
-  let { title, children } = $props();
+  import type {Snippet} from "svelte";
+
+  let {
+    title,
+    children,
+  }: {
+    title: string;
+    children: Snippet;
+  } = $props();
 </script>
 
 <div class="command-panel">
