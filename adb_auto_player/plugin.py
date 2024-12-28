@@ -1,5 +1,5 @@
-import os.path
 from abc import abstractmethod
+from pathlib import Path
 from time import sleep
 from typing import Any
 
@@ -20,16 +20,16 @@ class Plugin:
         self.store: dict[str, Any] = {}
 
     @abstractmethod
-    def get_template_dir_path(self) -> str:
-        return ""
+    def get_template_dir_path(self) -> Path:
+        pass
 
     @abstractmethod
     def get_config_constraints(self) -> dict[str, ConfigConstraintType]:
-        return {}
+        pass
 
     @abstractmethod
     def get_menu_options(self) -> list[dict[str, Any]]:
-        return []
+        pass
 
     def check_requirements(self) -> None:
         """
@@ -52,10 +52,7 @@ class Plugin:
         grayscale: bool = False,
         base_image: Image.Image | None = None,
     ) -> tuple[int, int] | None:
-        template_path = os.path.join(
-            self.get_template_dir_path(),
-            template,
-        )
+        template_path = self.get_template_dir_path() / template
 
         return screen_utils.find_center(
             self.device,
@@ -68,10 +65,7 @@ class Plugin:
     def find_all_template_centers(
         self, template: str, grayscale: bool = False
     ) -> list[tuple[int, int]] | None:
-        template_path = os.path.join(
-            self.get_template_dir_path(),
-            template,
-        )
+        template_path = self.get_template_dir_path() / template
 
         return screen_utils.find_all_centers(
             self.device,

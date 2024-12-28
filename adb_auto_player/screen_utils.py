@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 from typing import Tuple
 
 import cv2
@@ -18,7 +19,7 @@ def get_screenshot(device: AdbDevice) -> Image.Image:
     raise AdbException(f"Screenshots cannot be recorded from device: {device.serial}")
 
 
-def __load_image(image_path: str) -> Image.Image:
+def __load_image(image_path: Path) -> Image.Image:
     """
     :raises FileNotFoundError:
     :raises IOError:
@@ -30,7 +31,7 @@ def __load_image(image_path: str) -> Image.Image:
 
 def find_center(
     device: AdbDevice,
-    template_image_path: str,
+    template_image_path: Path,
     threshold: float = 0.9,
     grayscale: bool = False,
     base_image: Image.Image | None = None,
@@ -72,7 +73,7 @@ def __find_template_center(
 
 def find_all_centers(
     device: AdbDevice,
-    template_image_path: str,
+    template_image_path: Path,
     threshold: float = 0.9,
     grayscale: bool = False,
 ) -> list[Tuple[int, int]]:

@@ -1,4 +1,4 @@
-import os.path
+from pathlib import Path
 from time import sleep
 from typing import Any
 import logging
@@ -84,8 +84,8 @@ class AFKJourney(Plugin):
         "Walker",
     ]
 
-    def get_template_dir_path(self) -> str:
-        return os.path.join(get_plugins_dir(), "AFKJourney", "templates")
+    def get_template_dir_path(self) -> Path:
+        return get_plugins_dir() / "AFKJourney" / "templates"
 
     def get_menu_options(self) -> list[dict[str, Any]]:
         return [

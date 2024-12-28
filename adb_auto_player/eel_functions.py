@@ -147,8 +147,8 @@ def __save_main_config(new_config: dict[str, Any]) -> None:
     global main_config, global_device
     main_config = new_config
     plugin_loader.save_config(new_config)
-    logging.info("Config saved")
     update_logging_from_config(main_config)
+    logging.info("Config saved")
     global_device = None
     return None
 
@@ -234,6 +234,7 @@ def __run_action_in_process(
                 action_func(**kwargs)
     except Exception as e:
         logging.error(f"{e}")
+        logging.debug(f"{e}", exc_info=True)
 
 
 @eel.expose

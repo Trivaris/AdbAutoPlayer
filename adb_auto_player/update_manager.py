@@ -1,4 +1,3 @@
-import os
 import shutil
 import sys
 import tomllib
@@ -12,17 +11,25 @@ from packaging.version import Version
 
 import logging
 
-GITHUB_REPO: str = "yulesxoxo/AdbAutoPlayer"
-RELEASE_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+RELEASE_API_URL = f"https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest"
 PYPROJECT_VERSION: str | None = None
 LATEST_RELEASE_JSON: dict[str, Any] | None = None
 
 
-def __get_pyproject_toml_path() -> str:
+def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        return os.path.join(sys._MEIPASS, "pyproject.toml")  # type: ignore
+        path = Path(sys._MEIPASS) # type: ignore
     else:
-        return os.path.join(Path(os.getcwd()).parent, "pyproject.toml")
+        path = Path.cwd()
+    logging.debug(f"Project dir: {path}")
+    return path
+
+
+def __get_pyproject_toml_path() -> Path:
+    if getattr(sys, "frozen", False):
+        return __get_project_dir() / "pyproject.toml"
+    else:
+        return  Path.cwd().parent / "pyproject.toml"
 
 
 def __get_version_from_pyproject() -> str:
@@ -45,6 +52,7 @@ def __get_latest_release_json() -> dict[str, Any] | None:
 
     response = requests.get(RELEASE_API_URL)
     if response.status_code != 200:
+        logging.debug(f"Failed to fetch latest release: {response.status_code}, {response.text}")
         return None
 
     LATEST_RELEASE_JSON = response.json()
@@ -74,7 +82,7 @@ def __get_plugins_zip_url() -> str | None:
 
 
 def __get_version_from_version_check_file() -> str | None:
-    version_check_path = Path("VERSION_CHECK")
+    version_check_path = __get_project_dir() / "VERSION_CHECK"
     if version_check_path.exists():
         with version_check_path.open() as f:
             return f.read().strip()
@@ -112,22 +120,22 @@ def __download_and_extract_plugins(url: str) -> bool:
         return False
 
     with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
-        zip_ref.extractall("./tmp")
+        zip_ref.extractall(__get_project_dir() / "tmp")
         return True
 
 
 def __install_compatible_plugins() -> bool | None:
-    base_dir = "tmp/plugins/"
-    if not os.path.exists(base_dir):
+    base_dir = __get_project_dir() / "tmp" / "plugins"
+    if not base_dir.exists():
         logging.debug(f"The directory {base_dir} does not exist")
         return None
 
     all_plugins_installed: bool = True
-    for dir_name in os.listdir(base_dir):
-        dir_path = os.path.join(base_dir, dir_name)
-        config_path = os.path.join(dir_path, "config.toml")
+    for dir_name in list(base_dir.iterdir()): # type: Path
+        dir_path = base_dir / dir_name
+        config_path = dir_path / "config.toml"
 
-        if not os.path.exists(config_path):
+        if not config_path.exists():
             logging.debug(f"Config missing: {config_path}")
             continue
 
@@ -146,37 +154,40 @@ def __install_compatible_plugins() -> bool | None:
         if Version(min_adb_auto_player_version) <= Version(
             __get_version_from_pyproject()
         ):
-            __install_plugin_from_tmp(dir_path, dir_name)
+            __install_plugin_from_tmp(dir_path)
         else:
             all_plugins_installed = False
 
     return all_plugins_installed
 
 
-def __backup_existing_config(plugin_dir: str) -> None:
-    config_path = os.path.join(plugin_dir, "config.toml")
-    backup_config_path = os.path.join(plugin_dir, "config_backup.toml")
+def __backup_existing_config(plugin_dir: Path) -> None:
+    """
+    TODO update existing config instead of copying.
+    """
+    config_path = plugin_dir / "config.toml"
+    backup_config_path = plugin_dir / "config_backup.toml"
 
-    if os.path.exists(config_path):
+    if config_path.exists():
         shutil.copy2(config_path, backup_config_path)
 
 
-def __install_plugin_from_tmp(dir_path: str, dir_name: str) -> None:
-    plugin_dir = f"./plugins/{dir_name}"
-    os.makedirs(plugin_dir, exist_ok=True)
+def __install_plugin_from_tmp(dir_path: Path) -> None:
+    plugin_dir = __get_project_dir() / "plugins" / dir_path.name
+    plugin_dir.mkdir(parents=True, exist_ok=True)
 
     __backup_existing_config(plugin_dir)
 
-    for item in os.listdir(dir_path):
-        source_item = os.path.join(dir_path, item)
-        dest_item = os.path.join(plugin_dir, item)
+    for item in list(dir_path.iterdir()): # type: Path
+        source_item = dir_path / item.name
+        dest_item = plugin_dir / item.name
 
-        if os.path.isdir(source_item):
+        if source_item.is_dir():
             shutil.copytree(source_item, dest_item, dirs_exist_ok=True)
         else:
             shutil.copy2(source_item, dest_item)
 
-    logging.info(f"Plugin updated: {dir_name}")
+    logging.info(f"Plugin updated: {dir_path.name}")
 
 
 def __update_plugins() -> None | bool:
@@ -192,11 +203,11 @@ def __update_plugins() -> None | bool:
     if not __download_and_extract_plugins(browser_download_url):
         return None
 
-    with open("VERSION_CHECK", "w") as version_file:
+    with open(__get_project_dir() / "VERSION_CHECK", "w") as version_file:
         version_file.write(latest_version)
 
     all_plugins_installed = __install_compatible_plugins()
-    shutil.rmtree("./tmp")
+    shutil.rmtree(__get_project_dir() / "tmp")
     return all_plugins_installed
 
 

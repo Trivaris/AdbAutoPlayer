@@ -1,5 +1,4 @@
 import multiprocessing
-import os
 import sys
 from typing import NoReturn
 
@@ -54,7 +53,7 @@ def init_eel() -> None:
     multiprocessing.freeze_support()
     eel_functions.init()
     if getattr(sys, "frozen", False):
-        path = os.path.join(sys._MEIPASS, "frontend", "build")  # type: ignore
+        path = Path(sys._MEIPASS) / "frontend" / "build"  # type: ignore
         eel.init(path, [".svelte", ".html", ".js"])
     else:
         eel.init("frontend/src", [".svelte"])

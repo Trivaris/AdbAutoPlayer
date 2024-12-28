@@ -4,3 +4,4 @@ build
 AdbAutoPlayer.zip
 VERSION_CHECK
 /tmp/
+config_backup.toml

@@ -72,13 +72,14 @@ class FrontendHandler(logging.Handler):
 
 
 def enable_frontend_logs() -> None:
+    logger = logging.getLogger()
+    logger.handlers.clear()
+
     handler = FrontendHandler()
     formatter = Formatter(
         fmt="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
     )
     handler.setFormatter(formatter)
-
-    logger = logging.getLogger()
 
     queue_handler = QueueHandler(get_log_queue())  # type: ignore
     logger.addHandler(queue_handler)

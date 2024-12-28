@@ -1,9 +1,10 @@
 import hashlib
 import importlib.util
 import json
-import os
 import sys
 import tomllib
+from pathlib import Path
+
 import toml
 import types
 from typing import Any, cast
@@ -14,33 +15,28 @@ PLUGIN_LIST_FILE = "plugin_list.json"
 PLUGIN_CONFIG_FILE = "config.toml"
 MAIN_CONFIG_FILE = "main_config.toml"
 
-
-def get_plugins_dir() -> str:
+def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        return os.path.join(os.path.dirname(sys.executable), "plugins")
-    return "plugins"
+        path = Path(sys._MEIPASS) # type: ignore
+    else:
+        path = Path.cwd()
+    logging.debug(f"Project dir: {path}")
+    return path
 
-
-def __get_plugin_list_file_location() -> str:
-    if getattr(sys, "frozen", False):
-        return os.path.dirname(sys.executable)
-    return "."
+def get_plugins_dir() -> Path:
+    return __get_project_dir() / "plugins"
 
 
 def get_main_config() -> dict[str, Any]:
-    if getattr(sys, "frozen", False):
-        config_file = os.path.join(os.path.dirname(sys.executable), MAIN_CONFIG_FILE)
-    else:
-        config_file = os.path.join(MAIN_CONFIG_FILE)
-    with open(config_file, "rb") as f:
+    with open(__get_project_dir() / MAIN_CONFIG_FILE, "rb") as f:
         return tomllib.load(f)
 
 
 def __scan_plugins() -> list[dict[str, Any]]:
     plugins = []
 
-    for plugin_dir_name in os.listdir(get_plugins_dir()):
-        config = load_config(plugin_dir_name)
+    for plugin_path in list(get_plugins_dir().iterdir()): # type: Path
+        config = load_config(plugin_path.name)
 
         if config:
             plugin_config = config.get("plugin", {})
@@ -49,7 +45,7 @@ def __scan_plugins() -> list[dict[str, Any]]:
             plugin = {
                 "packages": packages,
                 "name": name,
-                "dir": plugin_dir_name,
+                "dir": plugin_path.name
             }
             plugins.append(plugin)
 
@@ -61,19 +57,18 @@ def __generate_plugin_list_hash() -> str:
 
     plugins_dir = get_plugins_dir()
 
-    for plugin_name in os.listdir(plugins_dir):
-        plugin_dir = os.path.join(plugins_dir, plugin_name)
-        config_file = os.path.join(plugin_dir, PLUGIN_CONFIG_FILE)
+    for plugin_path in list(plugins_dir.iterdir()): # type: Path
+        config_file = plugin_path / PLUGIN_CONFIG_FILE
 
-        if os.path.isdir(plugin_dir) and os.path.isfile(config_file):
-            hash_md5.update(plugin_name.encode("utf-8"))
-            hash_md5.update(str(os.path.getmtime(config_file)).encode("utf-8"))
+        if config_file.is_file():
+            hash_md5.update(str(config_file.stat().st_mtime).encode("utf-8"))
 
     return hash_md5.hexdigest()
 
 
 def load_plugin_configs() -> list[dict[str, Any]]:
-    if os.path.exists(PLUGIN_LIST_FILE):
+    path = __get_project_dir() / PLUGIN_LIST_FILE
+    if path.exists():
         with open(PLUGIN_LIST_FILE, "r") as f:
             cached_plugins = json.load(f)
 
@@ -89,21 +84,20 @@ def load_plugin_configs() -> list[dict[str, Any]]:
 def __create_plugin_list_file(plugins: list[dict[str, Any]]) -> None:
     plugin_data = {"hash": __generate_plugin_list_hash(), "plugins": plugins}
 
-    with open(__get_plugin_list_file_location() + "/" + PLUGIN_LIST_FILE, "w") as f:
+    with open(__get_project_dir() / PLUGIN_LIST_FILE, "w") as f:
         json.dump(plugin_data, f, indent=4)
 
 
 def load_config(plugin_dir: str) -> dict[str, Any] | None:
-    config_file = os.path.join(get_plugins_dir(), plugin_dir, PLUGIN_CONFIG_FILE)
-    if not os.path.exists(config_file):
+    config_file = get_plugins_dir() / plugin_dir / PLUGIN_CONFIG_FILE
+    if not config_file.exists():
         return None
     with open(config_file, "rb") as f:
         return tomllib.load(f)
 
 
 def save_config_for_plugin(config: dict[str, Any], plugin_dir: str) -> None:
-    config_file = os.path.join(get_plugins_dir(), plugin_dir, PLUGIN_CONFIG_FILE)
-    os.makedirs(os.path.dirname(config_file), exist_ok=True)
+    config_file = get_plugins_dir() / plugin_dir / PLUGIN_CONFIG_FILE
     with open(config_file, "w") as f:
         toml.dump(config, f)
 
@@ -112,7 +106,7 @@ def load_plugin_module(plugin_name: str) -> types.ModuleType:
     """
     :raises ValueError: When module spec could not be loaded
     """
-    plugin_main_path = os.path.join(get_plugins_dir(), plugin_name, "run.py")
+    plugin_main_path = get_plugins_dir() / plugin_name / "run.py"
     logging.debug(f"Loading plugin module: {plugin_main_path}")
 
     spec = importlib.util.spec_from_file_location(plugin_name, plugin_main_path)
@@ -142,9 +136,5 @@ def get_plugin_for_app(
 
 
 def save_config(config: dict[str, Any]) -> None:
-    if getattr(sys, "frozen", False):
-        config_file = os.path.join(os.path.dirname(sys.executable), MAIN_CONFIG_FILE)
-    else:
-        config_file = MAIN_CONFIG_FILE
-    with open(config_file, "w") as f:
+    with open(__get_project_dir() / MAIN_CONFIG_FILE, "w") as f:
         toml.dump(config, f)

@@ -69,11 +69,9 @@
 
   function openConfigForm({ openGameConfig }: { openGameConfig: boolean }) {
     isGameConfig = openGameConfig;
+    showConfigForm = true;
     window.eel.get_editable_config(isGameConfig)((response: any) => {
       configFormProps = response;
-      editableConfig = response.config;
-      configConstraints = response.constraints;
-      showConfigForm = true;
     });
   }
 
@@ -83,7 +81,11 @@
 
   let updateStateTimeout: number | undefined;
   function updateState() {
+    console.log("updateState");
+    console.log(showConfigForm);
+    console.log(disableActions);
     if (showConfigForm) {
+      updateStateTimeout = setTimeout(updateState, 2500);
       return;
     }
     if (disableActions) {
@@ -98,11 +100,11 @@
         }
       });
     }
-    updateStateTimeout = setTimeout(updateState, 1000);
+    updateStateTimeout = setTimeout(updateState, 2500);
   }
 
   onMount(() => {
-    updateState();
+    updateState()
   });
 
   onDestroy(() => {
