@@ -35,7 +35,7 @@ def get_main_config() -> dict[str, Any]:
 def __scan_plugins() -> list[dict[str, Any]]:
     plugins = []
 
-    for plugin_path in list(get_plugins_dir().iterdir()): # type: Path
+    for plugin_path in get_plugins_dir().iterdir(): # type: Path
         config = load_config(plugin_path.name)
 
         if config:
@@ -57,7 +57,7 @@ def __generate_plugin_list_hash() -> str:
 
     plugins_dir = get_plugins_dir()
 
-    for plugin_path in list(plugins_dir.iterdir()): # type: Path
+    for plugin_path in plugins_dir.iterdir(): # type: Path
         config_file = plugin_path / PLUGIN_CONFIG_FILE
 
         if config_file.is_file():

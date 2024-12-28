@@ -131,7 +131,7 @@ def __install_compatible_plugins() -> bool | None:
         return None
 
     all_plugins_installed: bool = True
-    for dir_name in list(base_dir.iterdir()): # type: Path
+    for dir_name in base_dir.iterdir(): # type: Path
         dir_path = base_dir / dir_name
         config_path = dir_path / "config.toml"
 
@@ -178,7 +178,7 @@ def __install_plugin_from_tmp(dir_path: Path) -> None:
 
     __backup_existing_config(plugin_dir)
 
-    for item in list(dir_path.iterdir()): # type: Path
+    for item in dir_path.iterdir(): # type: Path
         source_item = dir_path / item.name
         dest_item = plugin_dir / item.name
 
