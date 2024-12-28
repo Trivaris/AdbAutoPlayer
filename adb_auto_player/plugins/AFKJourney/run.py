@@ -289,6 +289,7 @@ class AFKJourney(Plugin):
         return excluded_heroes.get(template)
 
     def __handle_multi_stage(self) -> bool:
+        logging.debug("__handle_multi_stage")
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
             attempts, _, _, _ = self.__get_duras_trials_config()
         else:
@@ -391,6 +392,7 @@ class AFKJourney(Plugin):
         self.device.click(*confirm)
 
     def __handle_single_stage(self) -> bool:
+        logging.debug("__handle_single_stage")
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
             attempts, _, _, _ = self.__get_duras_trials_config()
         else:
@@ -404,7 +406,7 @@ class AFKJourney(Plugin):
                 return False
 
             template, x, y = self.wait_for_any_template(
-                ["next.png", "first_clear.png", "retry.png", "confirm.png"],
+                ["next.png", "first_clear.png", "retry.png", "confirm.png", "result.png"],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
@@ -420,6 +422,9 @@ class AFKJourney(Plugin):
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
                     self.device.click(x, y)
+                case "result.png":
+                    self.device.click(950, 1800)
+                    return True
         return False
 
     def push_afk_stages(self, season: bool) -> None:
