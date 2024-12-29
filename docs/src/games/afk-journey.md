@@ -41,6 +41,9 @@ Configuration is only loaded once when the App starts or the config is updated v
 
 - **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
 
+- **spend_gold**: 
+  - `true`: Gold will be spent to continue retrying after failure.
+  - `false`: Gold will not be spent to keep retrying the trials.
 ---
 
 ### [duras_trials]
