@@ -5,6 +5,7 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+import toml
 
 import requests
 from packaging.version import Version
@@ -160,23 +161,36 @@ def __install_compatible_plugins() -> bool | None:
 
     return all_plugins_installed
 
+def __merge_dicts(existing: dict, new: dict) -> dict:
+    """
+    Recursively merge two dictionaries. Values from `new` are added to `existing` if they do not exist.
+    """
+    for key, value in new.items():
+        if key in existing:
+            if isinstance(existing[key], dict) and isinstance(value, dict):
+                __merge_dicts(existing[key], value)
+        else:
+            existing[key] = value
+    return existing
 
-def __backup_existing_config(plugin_dir: Path) -> None:
-    """
-    TODO update existing config instead of copying.
-    """
+def __update_config(plugin_dir: Path, new_config_path: Path) -> None:
     config_path = plugin_dir / "config.toml"
-    backup_config_path = plugin_dir / "config_backup.toml"
 
     if config_path.exists():
-        shutil.copy2(config_path, backup_config_path)
+        existing_config = toml.load(config_path)
+        new_config = toml.load(new_config_path)
+
+        updated_config = __merge_dicts(existing_config, new_config)
+        with config_path.open("w") as f:
+            toml.dump(updated_config, f)
+    else:
+        shutil.copy(new_config_path, config_path)
+
 
 
 def __install_plugin_from_tmp(dir_path: Path) -> None:
     plugin_dir = __get_project_dir() / "plugins" / dir_path.name
     plugin_dir.mkdir(parents=True, exist_ok=True)
-
-    __backup_existing_config(plugin_dir)
 
     for item in dir_path.iterdir(): # type: Path
         source_item = dir_path / item.name
@@ -184,6 +198,9 @@ def __install_plugin_from_tmp(dir_path: Path) -> None:
 
         if source_item.is_dir():
             shutil.copytree(source_item, dest_item, dirs_exist_ok=True)
+        elif source_item.name == 'config.toml':
+            __update_config(plugin_dir, source_item)
+            continue
         else:
             shutil.copy2(source_item, dest_item)
 
@@ -227,7 +244,3 @@ def run_self_updater() -> None:
         )
     else:
         logging.info("Plugins updated successfully")
-        logging.warning(
-            "Your plugin configs have been reset, "
-            "backups were saved as 'config_backup.toml'"
-        )
