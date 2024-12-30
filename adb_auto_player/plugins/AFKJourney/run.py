@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
-from typing import Any, NamedTuple
+from typing import Any
 import logging
 import adb_auto_player.config_constraint as constraints
 from adb_auto_player.exceptions import TimeoutException
@@ -152,7 +152,7 @@ class AFKJourney(Plugin):
         }
 
     @dataclass
-    class GeneralConfig(NamedTuple):
+    class GeneralConfig:
         excluded_heroes: list[str]
         assist_limit: int
 
@@ -164,7 +164,7 @@ class AFKJourney(Plugin):
         )
 
     @dataclass
-    class AFKStageConfig(NamedTuple):
+    class AFKStageConfig:
         attempts: int
         formations: int
         use_suggested_formations: bool
@@ -173,7 +173,7 @@ class AFKJourney(Plugin):
 
     def __get_afk_stage_config(self) -> AFKStageConfig:
         config = self.config.get(self.CONFIG_AFK_STAGES, {})
-        return self.AFKStageConfig(
+        return AFKJourney.AFKStageConfig(
             attempts=max(1, int(config.get("attempts", 5))),
             formations=max(1, int(config.get("formations", 7))),
             use_suggested_formations=bool(config.get("use_suggested_formations", True)),
@@ -182,7 +182,7 @@ class AFKJourney(Plugin):
         )
 
     @dataclass
-    class DurasTrialsConfig(NamedTuple):
+    class DurasTrialsConfig:
         attempts: int
         formations: int
         use_suggested_formations: bool
