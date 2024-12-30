@@ -6,7 +6,7 @@ assist_limit = 20
 attempts = 5
 formations = 7
 use_suggested_formations = true
-push_both_modes = false
+push_both_modes = true
 spend_gold = false
 
 [duras_trials]
