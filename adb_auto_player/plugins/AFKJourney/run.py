@@ -16,6 +16,7 @@ class AFKJourney(Plugin):
     MODE_DURAS_TRIALS: str = "DURAS_TRIALS"
     MODE_AFK_STAGES: str = "AFK_STAGES"
     STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
+    STORE_FORMATION_NUM: str = "FORMATION_NUM"
     CONFIG_GENERAL: str = "general"
     CONFIG_AFK_STAGES: str = "afk_stages"
     CONFIG_DURAS_TRIALS: str = "duras_trials"
@@ -207,22 +208,20 @@ class AFKJourney(Plugin):
             formations = self.__get_duras_trials_config().formations
         else:
             formations = self.__get_afk_stage_config().formations
-        formation_num: int = 0
+        self.store[self.STORE_FORMATION_NUM] = 0
         if not use_suggested_formations:
             logging.info("Not using suggested Formations")
             formations = 1
 
-        while formation_num < formations:
-            formation_num += 1
+        while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
+            self.store[self.STORE_FORMATION_NUM] += 1
             self.wait_for_template("records.png")
 
             is_multi_stage: bool = True
             if self.find_first_template_center("formation_swap.png") is None:
                 is_multi_stage = False
 
-            if use_suggested_formations and not self.__copy_suggested_formation(
-                formation_num
-            ):
+            if use_suggested_formations and not self.__copy_suggested_formation_from_records(formations):
                 continue
 
             if is_multi_stage and self.__handle_multi_stage():
@@ -238,12 +237,14 @@ class AFKJourney(Plugin):
         logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def __copy_suggested_formation(self, formation_num: int = 1) -> int:
-        logging.info(f"Copying Formation #{formation_num}")
-        records = self.wait_for_template("records.png")
-        self.device.click(*records)
+    def __copy_suggested_formation(self, formations: int = 1, start_count: int = 0) -> bool:
+        formation_num = self.store.get(self.STORE_FORMATION_NUM)
 
-        counter = formation_num
+        if formations < formation_num:
+            return False
+
+        logging.info(f"Copying Formation #{formation_num}")
+        counter = formation_num - start_count
         while counter > 1:
             formation_next = self.wait_for_template(
                 "formation_next.png",
@@ -253,26 +254,40 @@ class AFKJourney(Plugin):
             self.device.click(*formation_next)
             sleep(1)
             counter -= 1
-
-        copy = self.wait_for_template("copy.png", timeout=5)
-
-        excluded_hero = self.__formation_contains_excluded_hero()
-
-        self.device.click(*copy)
-        logging.debug("Formation copied")
         sleep(1)
-
-        if self.__click_confirm_on_popup():
-            logging.warning("Formation contains locked Artifacts or Heroes skipping")
-            return False
-
+        excluded_hero = self.__formation_contains_excluded_hero()
         if excluded_hero is not None:
             logging.warning(
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
-            return False
-
+            self.store[self.STORE_FORMATION_NUM] += 1
+            return self.__copy_suggested_formation(formations, start_count+1)
         return True
+
+
+    def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
+        records = self.wait_for_template("records.png")
+        self.device.click(*records)
+        copy = self.wait_for_template("copy.png", timeout=5)
+
+        start_count = 0
+        while True:
+            if not self.__copy_suggested_formation(formations, start_count):
+                return False
+            self.device.click(*copy)
+            sleep(1)
+
+            cancel = self.find_first_template_center("cancel.png")
+            if cancel:
+                logging.warning("Formation contains locked Artifacts or Heroes skipping")
+                self.device.click(*cancel)
+                start_count = self.store.get(self.STORE_FORMATION_NUM) - 1
+                self.store[self.STORE_FORMATION_NUM] += 1
+            else:
+                self.__click_confirm_on_popup()
+                logging.debug("Formation copied")
+                return True
+
 
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes_dict = {
@@ -466,7 +481,7 @@ class AFKJourney(Plugin):
 
         logging.info(f"Pushing: {stages_name}")
         self.__navigate_to_afk_stages_screen()
-        while self.handle_battle_screen():
+        while self.handle_battle_screen(self.__get_afk_stage_config().use_suggested_formations):
             stages_pushed += 1
             logging.info(f"{stages_name} pushed: {stages_pushed}")
 
@@ -585,7 +600,6 @@ class AFKJourney(Plugin):
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None:
-        use_suggested_formations = self.__get_duras_trials_config().use_suggested_formations
         # y+100 clicks closer to center of the button instead of rate up text
         self.device.click(x, y + 100)
 
@@ -604,7 +618,7 @@ class AFKJourney(Plugin):
                 case "records.png":
                     pass
 
-            result = self.handle_battle_screen(use_suggested_formations)
+            result = self.handle_battle_screen(self.__get_duras_trials_config().use_suggested_formations)
 
             if result is True:
                 self.wait_for_template("first_clear.png")
