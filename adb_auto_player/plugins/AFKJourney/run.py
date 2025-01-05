@@ -521,6 +521,11 @@ class AFKJourney(Plugin):
                 self.device.click(530, 1630)
                 sleep(3)
                 continue
+            confirm = self.find_first_template_center("confirm.png")
+            if confirm:
+                self.device.click(*confirm)
+                sleep(1)
+                continue
             if self.find_first_template_center("time_of_day.png") is None:
                 self.press_back_button()
                 sleep(3)
