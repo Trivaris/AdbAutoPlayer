@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
-from time import sleep
-from typing import Any
+from time import sleep, time
+from typing import Any, TypeVar, Callable
 
 from PIL import Image
 from adbutils._device import AdbDevice
@@ -63,19 +63,24 @@ class Plugin:
         )
 
     def find_all_template_centers(
-        self, template: str, grayscale: bool = False
+        self,
+        template: str,
+        threshold: float = 0.9,
+        grayscale: bool = False
     ) -> list[tuple[int, int]] | None:
         template_path = self.get_template_dir_path() / template
 
         return screen_utils.find_all_centers(
             self.device,
             template_path,
+            threshold=threshold,
             grayscale=grayscale,
         )
 
     def wait_for_template(
         self,
         template: str,
+        threshold: float = 0.9,
         grayscale: bool = False,
         delay: float = 1,
         timeout: float = 30,
@@ -84,75 +89,100 @@ class Plugin:
         """
         :raises TimeoutException:
         """
-        elapsed_time = 0
-        while True:
+        def find_template() -> tuple[int, int] | None:
             result = self.find_first_template_center(
                 template,
+                threshold=threshold,
                 grayscale=grayscale,
             )
             if result is not None:
                 logging.debug(f"{template} found")
-                return result
+            return result
 
-            sleep(delay)
-            elapsed_time += delay
-            if elapsed_time >= timeout:
-                if timeout_message:
-                    raise TimeoutException(f"{timeout_message}")
-                else:
-                    raise TimeoutException(
-                        f"Could not find Template: '{template}' after {timeout} seconds"
-                    )
+        if timeout_message is None:
+            timeout_message = f"Could not find Template: '{template}' after {timeout} seconds"
+
+        return self.__execute_or_timeout(
+            find_template,
+            delay=delay,
+            timeout=timeout,
+            timeout_message=timeout_message
+        )
 
     def wait_until_template_disappears(
-        self, template: str, delay: float = 1, timeout: float = 30
+        self,
+        template: str,
+        threshold: float = 0.9,
+        grayscale: bool = False,
+        delay: float = 1,
+        timeout: float = 30,
+        timeout_message: str | None = None,
     ) -> None:
         """
         :raises TimeoutException:
         """
-        elapsed_time = 0
-        while True:
-            if self.find_first_template_center(template) is None:
+        def find_template() -> tuple[int, int] | None:
+            result = self.find_first_template_center(
+                template,
+                threshold=threshold,
+                grayscale=grayscale,
+            )
+            if result is None:
                 logging.debug(f"{template} no longer visible")
-                return None
 
-            sleep(delay)
-            elapsed_time += delay
-            if elapsed_time >= timeout:
-                raise TimeoutException(
-                    f"Template: {template} is still visible after {timeout} seconds"
-                )
+            return result
+
+        if timeout_message is None:
+            timeout_message = f"Template: {template} is still visible after {timeout} seconds"
+
+        self.__execute_or_timeout(
+            find_template,
+            delay=delay,
+            timeout=timeout,
+            timeout_message=timeout_message,
+        )
+        return None
 
     def wait_for_any_template(
-        self, templates: list[str], delay: float = 3, timeout: float = 30
+        self,
+        templates: list[str],
+        threshold: float = 0.9,
+        grayscale: bool = False,
+        delay: float = 3,
+        timeout: float = 30,
+        timeout_message: str | None = None,
     ) -> tuple[str, int, int]:
         """
         :raises TimeoutException:
         """
-        elapsed_time = 0
-        while True:
-            result = self.find_any_template_center(templates)
+        def find_template() ->  tuple[str, int, int] | None:
+            return self.find_any_template_center(
+                templates,
+                threshold=threshold,
+                grayscale=grayscale,
+            )
 
-            if result is not None:
-                return result
+        if timeout_message is None:
+            timeout_message = f"None of the templates {templates} were found after {timeout} seconds"
 
-            sleep(delay)
-            elapsed_time += delay
-            if elapsed_time >= timeout:
-                raise TimeoutException(
-                    f"None of the templates {templates}"
-                    f" were found after {timeout} seconds"
-                )
+        return self.__execute_or_timeout(
+            find_template,
+            delay=delay,
+            timeout=timeout,
+            timeout_message=timeout_message
+        )
 
     def find_any_template_center(
         self,
         templates: list[str],
+        threshold: float = 0.9,
         grayscale: bool = False,
     ) -> tuple[str, int, int] | None:
         base_image = screen_utils.get_screenshot(self.device)
         for template in templates:
             result = self.find_first_template_center(
                 template,
+                threshold=threshold,
                 grayscale=grayscale,
                 base_image=base_image,
             )
@@ -163,3 +193,34 @@ class Plugin:
 
     def press_back_button(self) -> None:
         self.device.keyevent(4)
+
+    def __execute_or_timeout(
+            self,
+            operation: Callable[[], TypeVar('T') | None],
+            timeout_message: str,
+            delay: float = 1,
+            timeout: float = 30,
+            result_should_be_none: bool = False
+    ) -> TypeVar('T'):
+        """
+        :raises TimeoutException:
+        """
+        time_spent_waiting = 0
+        end_time = time() + timeout
+        end_time_exceeded = False
+
+        while True:
+            result = operation()
+            if result_should_be_none and result is None:
+                return None
+            elif result is not None:
+                return result
+
+            sleep(delay)
+            time_spent_waiting += delay
+
+            if time_spent_waiting >= timeout or end_time_exceeded:
+                raise TimeoutException(f"{timeout_message}")
+
+            if end_time <= time():
+                end_time_exceeded = True
