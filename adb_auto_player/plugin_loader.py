@@ -15,13 +15,15 @@ PLUGIN_LIST_FILE = "plugin_list.json"
 PLUGIN_CONFIG_FILE = "config.toml"
 MAIN_CONFIG_FILE = "main_config.toml"
 
+
 def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        path = Path(sys._MEIPASS).parent # type: ignore
+        path = Path(sys._MEIPASS).parent  # type: ignore
     else:
         path = Path.cwd()
     logging.debug(f"Project dir: {path}")
     return path
+
 
 def get_plugins_dir() -> Path:
     return __get_project_dir() / "plugins"
@@ -35,18 +37,14 @@ def get_main_config() -> dict[str, Any]:
 def __scan_plugins() -> list[dict[str, Any]]:
     plugins = []
 
-    for plugin_path in get_plugins_dir().iterdir(): # type: Path
+    for plugin_path in get_plugins_dir().iterdir():  # type: Path
         config = load_config(plugin_path.name)
 
         if config:
             plugin_config = config.get("plugin", {})
             packages = plugin_config.get("packages")
             name = plugin_config.get("name")
-            plugin = {
-                "packages": packages,
-                "name": name,
-                "dir": plugin_path.name
-            }
+            plugin = {"packages": packages, "name": name, "dir": plugin_path.name}
             plugins.append(plugin)
 
     return plugins
@@ -57,7 +55,7 @@ def __generate_plugin_list_hash() -> str:
 
     plugins_dir = get_plugins_dir()
 
-    for plugin_path in plugins_dir.iterdir(): # type: Path
+    for plugin_path in plugins_dir.iterdir():  # type: Path
         config_file = plugin_path / PLUGIN_CONFIG_FILE
 
         if config_file.is_file():

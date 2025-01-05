@@ -12,14 +12,16 @@ from packaging.version import Version
 
 import logging
 
-RELEASE_API_URL = f"https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest"
+RELEASE_API_URL = (
+    "https://api.github.com/repos/" "yulesxoxo/AdbAutoPlayer/" "releases/latest"
+)
 PYPROJECT_VERSION: str | None = None
 LATEST_RELEASE_JSON: dict[str, Any] | None = None
 
 
 def __get_project_dir() -> Path:
     if getattr(sys, "frozen", False):
-        path = Path(sys._MEIPASS).parent # type: ignore
+        path = Path(sys._MEIPASS).parent  # type: ignore
     else:
         path = Path.cwd()
     logging.debug(f"Project dir: {path}")
@@ -28,9 +30,9 @@ def __get_project_dir() -> Path:
 
 def __get_pyproject_toml_path() -> Path:
     if getattr(sys, "frozen", False):
-        return __get_project_dir() / "_internal" /"pyproject.toml"
+        return __get_project_dir() / "_internal" / "pyproject.toml"
     else:
-        return  Path.cwd().parent / "pyproject.toml"
+        return Path.cwd().parent / "pyproject.toml"
 
 
 def __get_version_from_pyproject() -> str:
@@ -53,7 +55,9 @@ def __get_latest_release_json() -> dict[str, Any] | None:
 
     response = requests.get(RELEASE_API_URL)
     if response.status_code != 200:
-        logging.debug(f"Failed to fetch latest release: {response.status_code}, {response.text}")
+        logging.debug(
+            f"Failed to fetch latest release: {response.status_code}, {response.text}"
+        )
         return None
 
     LATEST_RELEASE_JSON = response.json()
@@ -132,7 +136,7 @@ def __install_compatible_plugins() -> bool | None:
         return None
 
     all_plugins_installed: bool = True
-    for dir_name in base_dir.iterdir(): # type: Path
+    for dir_name in base_dir.iterdir():  # type: Path
         dir_path = base_dir / dir_name
         config_path = dir_path / "config.toml"
 
@@ -161,9 +165,11 @@ def __install_compatible_plugins() -> bool | None:
 
     return all_plugins_installed
 
-def __merge_dicts(existing: dict, new: dict) -> dict:
+
+def __merge_dicts(existing: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
     """
-    Recursively merge two dictionaries. Values from `new` are added to `existing` if they do not exist.
+    Recursively merge two dictionaries.
+    Values from `new` are added to `existing` if they do not exist.
     """
     for key, value in new.items():
         if key in existing:
@@ -172,6 +178,7 @@ def __merge_dicts(existing: dict, new: dict) -> dict:
         else:
             existing[key] = value
     return existing
+
 
 def __update_config(plugin_dir: Path, new_config_path: Path) -> None:
     config_path = plugin_dir / "config.toml"
@@ -187,18 +194,17 @@ def __update_config(plugin_dir: Path, new_config_path: Path) -> None:
         shutil.copy(new_config_path, config_path)
 
 
-
 def __install_plugin_from_tmp(dir_path: Path) -> None:
     plugin_dir = __get_project_dir() / "plugins" / dir_path.name
     plugin_dir.mkdir(parents=True, exist_ok=True)
 
-    for item in dir_path.iterdir(): # type: Path
+    for item in dir_path.iterdir():  # type: Path
         source_item = dir_path / item.name
         dest_item = plugin_dir / item.name
 
         if source_item.is_dir():
             shutil.copytree(source_item, dest_item, dirs_exist_ok=True)
-        elif source_item.name == 'config.toml':
+        elif source_item.name == "config.toml":
             __update_config(plugin_dir, source_item)
             continue
         else:

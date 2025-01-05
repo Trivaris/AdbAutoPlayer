@@ -161,7 +161,7 @@ class AFKJourney(Plugin):
         config = self.config.get(self.CONFIG_GENERAL, {})
         return self.GeneralConfig(
             excluded_heroes=config.get("excluded_heroes", []),
-            assist_limit=max(1, int(config.get("attempts", 20)))
+            assist_limit=max(1, int(config.get("attempts", 20))),
         )
 
     @dataclass
@@ -179,7 +179,7 @@ class AFKJourney(Plugin):
             formations=max(1, int(config.get("formations", 7))),
             use_suggested_formations=bool(config.get("use_suggested_formations", True)),
             push_both_modes=bool(config.get("push_both_modes", True)),
-            spend_gold=bool(config.get("spend_gold", True))
+            spend_gold=bool(config.get("spend_gold", True)),
         )
 
     @dataclass
@@ -195,7 +195,7 @@ class AFKJourney(Plugin):
             attempts=max(1, int(config.get("attempts", 5))),
             formations=max(1, int(config.get("formations", 7))),
             use_suggested_formations=bool(config.get("use_suggested_formations", True)),
-            spend_gold=bool(config.get("spend_gold", True))
+            spend_gold=bool(config.get("spend_gold", True)),
         )
 
     def handle_battle_screen(self, use_suggested_formations: bool = True) -> bool:
@@ -221,7 +221,10 @@ class AFKJourney(Plugin):
             if self.find_first_template_center("formation_swap.png") is None:
                 is_multi_stage = False
 
-            if use_suggested_formations and not self.__copy_suggested_formation_from_records(formations):
+            if (
+                use_suggested_formations
+                and not self.__copy_suggested_formation_from_records(formations)
+            ):
                 continue
 
             if is_multi_stage and self.__handle_multi_stage():
@@ -237,8 +240,10 @@ class AFKJourney(Plugin):
         logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def __copy_suggested_formation(self, formations: int = 1, start_count: int = 0) -> bool:
-        formation_num = self.store.get(self.STORE_FORMATION_NUM)
+    def __copy_suggested_formation(
+        self, formations: int = 1, start_count: int = 0
+    ) -> bool:
+        formation_num = self.store.get(self.STORE_FORMATION_NUM, 0)
 
         if formations < formation_num:
             return False
@@ -261,9 +266,8 @@ class AFKJourney(Plugin):
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
             self.store[self.STORE_FORMATION_NUM] += 1
-            return self.__copy_suggested_formation(formations, start_count+1)
+            return self.__copy_suggested_formation(formations, start_count + 1)
         return True
-
 
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
         records = self.wait_for_template("records.png")
@@ -279,15 +283,16 @@ class AFKJourney(Plugin):
 
             cancel = self.find_first_template_center("cancel.png")
             if cancel:
-                logging.warning("Formation contains locked Artifacts or Heroes skipping")
+                logging.warning(
+                    "Formation contains locked Artifacts or Heroes skipping"
+                )
                 self.device.click(*cancel)
-                start_count = self.store.get(self.STORE_FORMATION_NUM) - 1
+                start_count = self.store.get(self.STORE_FORMATION_NUM, 1) - 1
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
                 self.__click_confirm_on_popup()
                 logging.debug("Formation copied")
                 return True
-
 
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes_dict = {
@@ -436,7 +441,13 @@ class AFKJourney(Plugin):
                 return False
 
             template, x, y = self.wait_for_any_template(
-                ["next.png", "first_clear.png", "retry.png", "confirm.png", "result.png"],
+                [
+                    "next.png",
+                    "first_clear.png",
+                    "retry.png",
+                    "confirm.png",
+                    "result.png",
+                ],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
@@ -481,7 +492,9 @@ class AFKJourney(Plugin):
 
         logging.info(f"Pushing: {stages_name}")
         self.__navigate_to_afk_stages_screen()
-        while self.handle_battle_screen(self.__get_afk_stage_config().use_suggested_formations):
+        while self.handle_battle_screen(
+            self.__get_afk_stage_config().use_suggested_formations
+        ):
             stages_pushed += 1
             logging.info(f"{stages_name} pushed: {stages_pushed}")
 
@@ -618,7 +631,9 @@ class AFKJourney(Plugin):
                 case "records.png":
                     pass
 
-            result = self.handle_battle_screen(self.__get_duras_trials_config().use_suggested_formations)
+            result = self.handle_battle_screen(
+                self.__get_duras_trials_config().use_suggested_formations
+            )
 
             if result is True:
                 self.wait_for_template("first_clear.png")

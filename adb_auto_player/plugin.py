@@ -63,10 +63,7 @@ class Plugin:
         )
 
     def find_all_template_centers(
-        self,
-        template: str,
-        threshold: float = 0.9,
-        grayscale: bool = False
+        self, template: str, threshold: float = 0.9, grayscale: bool = False
     ) -> list[tuple[int, int]] | None:
         template_path = self.get_template_dir_path() / template
 
@@ -89,6 +86,7 @@ class Plugin:
         """
         :raises TimeoutException:
         """
+
         def find_template() -> tuple[int, int] | None:
             result = self.find_first_template_center(
                 template,
@@ -100,13 +98,12 @@ class Plugin:
             return result
 
         if timeout_message is None:
-            timeout_message = f"Could not find Template: '{template}' after {timeout} seconds"
+            timeout_message = (
+                f"Could not find Template: '{template}' after {timeout} seconds"
+            )
 
         return self.__execute_or_timeout(
-            find_template,
-            delay=delay,
-            timeout=timeout,
-            timeout_message=timeout_message
+            find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
     def wait_until_template_disappears(
@@ -121,6 +118,7 @@ class Plugin:
         """
         :raises TimeoutException:
         """
+
         def find_template() -> tuple[int, int] | None:
             result = self.find_first_template_center(
                 template,
@@ -133,7 +131,9 @@ class Plugin:
             return result
 
         if timeout_message is None:
-            timeout_message = f"Template: {template} is still visible after {timeout} seconds"
+            timeout_message = (
+                f"Template: {template} is still visible after {timeout} seconds"
+            )
 
         self.__execute_or_timeout(
             find_template,
@@ -155,7 +155,8 @@ class Plugin:
         """
         :raises TimeoutException:
         """
-        def find_template() ->  tuple[str, int, int] | None:
+
+        def find_template() -> tuple[str, int, int] | None:
             return self.find_any_template_center(
                 templates,
                 threshold=threshold,
@@ -163,13 +164,12 @@ class Plugin:
             )
 
         if timeout_message is None:
-            timeout_message = f"None of the templates {templates} were found after {timeout} seconds"
+            timeout_message = (
+                f"None of the templates {templates} were found after {timeout} seconds"
+            )
 
         return self.__execute_or_timeout(
-            find_template,
-            delay=delay,
-            timeout=timeout,
-            timeout_message=timeout_message
+            find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
     def find_any_template_center(
@@ -194,25 +194,27 @@ class Plugin:
     def press_back_button(self) -> None:
         self.device.keyevent(4)
 
+    T = TypeVar("T")
+
     def __execute_or_timeout(
-            self,
-            operation: Callable[[], TypeVar('T') | None],
-            timeout_message: str,
-            delay: float = 1,
-            timeout: float = 30,
-            result_should_be_none: bool = False
-    ) -> TypeVar('T'):
+        self,
+        operation: Callable[[], T | None],
+        timeout_message: str,
+        delay: float = 1,
+        timeout: float = 30,
+        result_should_be_none: bool = False,
+    ) -> T:
         """
         :raises TimeoutException:
         """
-        time_spent_waiting = 0
+        time_spent_waiting: float = 0
         end_time = time() + timeout
         end_time_exceeded = False
 
         while True:
             result = operation()
             if result_should_be_none and result is None:
-                return None
+                return None  # type: ignore
             elif result is not None:
                 return result
 
