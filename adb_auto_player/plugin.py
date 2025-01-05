@@ -77,8 +77,8 @@ class Plugin:
         self,
         template: str,
         grayscale: bool = False,
-        delay: int = 1,
-        timeout: int = 30,
+        delay: float = 1,
+        timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[int, int]:
         """
@@ -105,7 +105,7 @@ class Plugin:
                     )
 
     def wait_until_template_disappears(
-        self, template: str, delay: int = 1, timeout: int = 30
+        self, template: str, delay: float = 1, timeout: float = 30
     ) -> None:
         """
         :raises TimeoutException:
@@ -124,7 +124,7 @@ class Plugin:
                 )
 
     def wait_for_any_template(
-        self, templates: list[str], delay: int = 3, timeout: int = 30
+        self, templates: list[str], delay: float = 3, timeout: float = 30
     ) -> tuple[str, int, int]:
         """
         :raises TimeoutException:

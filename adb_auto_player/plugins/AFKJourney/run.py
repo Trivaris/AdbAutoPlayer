@@ -666,9 +666,14 @@ class AFKJourney(Plugin):
             logging.info("Opening chat")
             self.__navigate_to_default_state()
             self.device.click(1010, 1080)
+            sleep(1)
+            self.device.click(110, 350)
             return False
         self.device.click(260, 1400)
-        sleep(1)
+        try:
+            self.wait_for_template("chat_button.png", delay=0.1, timeout=1)
+        except TimeoutException:
+            return False
         result = self.find_any_template_center(["join_now.png", "synergy.png"])
         if result is None:
             if self.find_first_template_center("world_chat.png") is None:
@@ -706,7 +711,7 @@ class AFKJourney(Plugin):
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.device.click(x, 1300)
-            sleep(1)
+            sleep(0.5)
         while True:
             cc_ready = self.find_first_template_center("cc_ready.png")
             if cc_ready:
