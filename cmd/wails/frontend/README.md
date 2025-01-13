@@ -1,6 +1,6 @@
 # Frontend
 
-## Install
+## Windows Setup
 ```bash
   deno install --allow-scripts
 ```
