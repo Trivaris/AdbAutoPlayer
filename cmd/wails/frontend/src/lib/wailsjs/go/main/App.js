@@ -33,3 +33,7 @@ export function StartGameProcess(arg1, arg2) {
 export function TerminateGameProcess() {
   return window['go']['main']['App']['TerminateGameProcess']();
 }
+
+export function UpdatePatch(arg1) {
+  return window['go']['main']['App']['UpdatePatch'](arg1);
+}

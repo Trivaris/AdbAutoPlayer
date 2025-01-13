@@ -19,3 +19,5 @@ export function SaveMainConfig(arg1:config.MainConfig):Promise<void>;
 export function StartGameProcess(arg1:games.Game,arg2:Array<string>):Promise<void>;
 
 export function TerminateGameProcess():Promise<void>;
+
+export function UpdatePatch(arg1:string):Promise<void>;
