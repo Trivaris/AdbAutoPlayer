@@ -6,9 +6,14 @@ import (
 	"adb-auto-player/internal/adb"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
+	"archive/zip"
 	"context"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 type App struct {
@@ -133,4 +138,73 @@ func (a *App) TerminateGameProcess() error {
 func (a *App) IsGameProcessRunning() bool {
 	pm := GetProcessManager()
 	return pm.IsProcessRunning()
+}
+
+func (a *App) UpdatePatch(assetUrl string) error {
+	runtime.LogInfo(a.ctx, "Downloading update")
+	response, err := http.Get(assetUrl)
+	if err != nil {
+		return fmt.Errorf("failed to download file: %v", err)
+	}
+	defer response.Body.Close()
+
+	tempFile, err := os.CreateTemp("", "patch-*.zip")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %v", err)
+	}
+	defer tempFile.Close()
+
+	_, err = io.Copy(tempFile, response.Body)
+	if err != nil {
+		return fmt.Errorf("failed to save downloaded file: %v", err)
+	}
+
+	zipReader, err := zip.OpenReader(tempFile.Name())
+	if err != nil {
+		return fmt.Errorf("failed to open zip file: %v", err)
+	}
+	defer zipReader.Close()
+
+	targetDir := "."
+	err = os.MkdirAll(targetDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create target directory: %v", err)
+	}
+
+	for _, file := range zipReader.File {
+		outputPath := filepath.Join(targetDir, file.Name)
+
+		if file.FileInfo().IsDir() {
+			err := os.MkdirAll(outputPath, file.Mode())
+			if err != nil {
+				return fmt.Errorf("failed to create directory: %v", err)
+			}
+			continue
+		}
+
+		err := os.MkdirAll(filepath.Dir(outputPath), 0755)
+		if err != nil {
+			return fmt.Errorf("failed to create directories: %v", err)
+		}
+
+		fileInZip, err := file.Open()
+		if err != nil {
+			return fmt.Errorf("failed to open file in zip archive: %v", err)
+		}
+		defer fileInZip.Close()
+
+		outputFile, err := os.Create(outputPath)
+		if err != nil {
+			return fmt.Errorf("failed to create extracted file: %v", err)
+		}
+		defer outputFile.Close()
+
+		_, err = io.Copy(outputFile, fileInZip)
+		if err != nil {
+			return fmt.Errorf("failed to copy file data: %v", err)
+		}
+	}
+
+	runtime.LogInfo(a.ctx, "Update successful")
+	return nil
 }
