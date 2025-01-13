@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import sys
 from typing import NoReturn
@@ -8,7 +9,6 @@ from psutil import Process
 
 import adb_auto_player.eel_functions as eel_functions
 
-import adb_auto_player.update_manager as update_manager
 import adb_auto_player.plugin_loader as plugin_loader
 from adb_auto_player.logging_setup import (
     update_logging_from_config,
@@ -89,5 +89,7 @@ if __name__ == "__main__":
         ADB_WAS_RUNNING = False
 
     init_eel()
-    update_manager.run_self_updater()
+    logging.error("Download new Version 1.0.0 for S3")
+    logging.error("https://github.com/yulesxoxo/AdbAutoPlayer/releases")
+    logging.error("This version cannot be updated to 1.0.0 please delete it")
     start()

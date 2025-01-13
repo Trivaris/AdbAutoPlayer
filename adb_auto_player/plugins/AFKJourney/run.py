@@ -87,9 +87,15 @@ class AFKJourney(Plugin):
     ]
 
     def get_template_dir_path(self) -> Path:
+        logging.error("Download new Version 1.0.0 for S3")
+        logging.error("https://github.com/yulesxoxo/AdbAutoPlayer/releases")
+        logging.error("This version cannot be updated to 1.0.0 please delete it")
         return get_plugins_dir() / "AFKJourney" / "templates"
 
     def get_menu_options(self) -> list[dict[str, Any]]:
+        logging.error("Download new Version 1.0.0 for S3")
+        logging.error("https://github.com/yulesxoxo/AdbAutoPlayer/releases")
+        logging.error("This version cannot be updated to 1.0.0 please delete it")
         return [
             {
                 "label": "Push Season Talent Stages",
@@ -130,6 +136,9 @@ class AFKJourney(Plugin):
         ]
 
     def get_config_constraints(self) -> dict[str, constraints.ConfigConstraintType]:
+        logging.error("Download new Version 1.0.0 for S3")
+        logging.error("https://github.com/yulesxoxo/AdbAutoPlayer/releases")
+        logging.error("This version cannot be updated to 1.0.0 please delete it")
         return {
             "general": {
                 "excluded_heroes": constraints.create_multi_checkbox_constraint(
@@ -473,6 +482,9 @@ class AFKJourney(Plugin):
         Entry for pushing AFK Stages
         :param season: Push Season Stage if True otherwise push regular AFK Stages
         """
+        logging.error("Download new Version 1.0.0 for S3")
+        logging.error("https://github.com/yulesxoxo/AdbAutoPlayer/releases")
+        logging.error("This version cannot be updated to 1.0.0 please delete it")
         self.store[self.STORE_SEASON] = season
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
 
