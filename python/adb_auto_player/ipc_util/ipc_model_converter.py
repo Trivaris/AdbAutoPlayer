@@ -1,6 +1,7 @@
 """IPC Model Converter."""
 
 from enum import StrEnum
+from pathlib import Path
 
 from adb_auto_player.ipc import GameGUIOptions, MenuOption
 from adb_auto_player.models.commands import MenuItem
@@ -139,9 +140,13 @@ class IPCModelConverter:
             return None
 
         try:
-            config = game_metadata.gui_metadata.config_class.from_toml(
-                ConfigLoader.games_dir() / game_metadata.config_file_path
-            )
+            config_path = game_metadata.config_file_path
+            if config_path:
+                config_path = Path(config_path)
+                if not config_path.is_absolute():
+                    config_path = ConfigLoader.games_dir() / config_path
+
+            config = game_metadata.gui_metadata.config_class.from_toml(config_path)
         except Exception:
             return None
 

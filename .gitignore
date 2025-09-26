@@ -21,6 +21,7 @@ adb-auto-player.exe
 # Build Artifacts
 build/bin
 *.zip
+result
 
 # Windows Build Artifacts
 

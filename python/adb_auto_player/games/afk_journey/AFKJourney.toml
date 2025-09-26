@@ -1,5 +1,5 @@
 ['AFK Stages']
-Attempts = 5
+Attempts = 2
 Formations = 7
 'Skip Manual Formations' = true
 'Spend Gold' = true
@@ -16,7 +16,7 @@ Difficulty = 13
 ['Custom Routine 1']
 'Display Name' = ''
 Repeat = true
-'Task List' = []
+'Task List' = ['Claim AFK Rewards', 'Equip new Equipment', 'Season Talent Stages']
 
 ['Custom Routine 2']
 'Display Name' = ''

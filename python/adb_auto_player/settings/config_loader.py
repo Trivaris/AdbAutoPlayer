@@ -1,6 +1,7 @@
 """ADB Auto Player Config Loader Module."""
 
 import logging
+import platform
 from functools import lru_cache
 from pathlib import Path
 
@@ -34,7 +35,23 @@ class ConfigLoader:
     def games_dir() -> Path:
         """Determine and return the games directory."""
         working_dir = ConfigLoader.working_dir()
+        linux_candidates: list[Path] = []
+        if platform.system() == "Linux":
+            linux_candidates = [
+                Path.home()
+                / ".config"
+                / "adbautoplayer"
+                / "python"
+                / "adb_auto_player"
+                / "games",
+                Path.home()
+                / ".config"
+                / "adbautoplayer"
+                / "games",
+            ]
+
         candidates: list[Path] = [
+            *linux_candidates,
             working_dir / "games",  # Windows GUI .exe, PyCharm
             working_dir.parent / "games",  # Windows CLI .exe
             working_dir / "adb_auto_player" / "games",  # uv
@@ -55,6 +72,11 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def general_settings() -> GeneralSettings:
         """Locate and load the general settings config.toml file."""
+        if platform.system() == "Linux":
+            config_toml_path = Path.home() / ".config" / "adbautoplayer" / "config.toml"
+            logging.debug(f"Python config.toml path: {config_toml_path}")
+            return GeneralSettings.from_toml(config_toml_path)
+
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
             working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle

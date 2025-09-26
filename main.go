@@ -14,6 +14,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"log"
 	"log/slog"
+	"os"
 )
 
 //go:embed all:frontend/dist
@@ -27,6 +28,9 @@ func main() {
 	println("Version:", Version)
 
 	isDev := Version == "dev"
+	if envDev := os.Getenv("ADB_AUTOPLAYER_FORCE_DEV"); envDev != "" && envDev != "0" {
+		isDev = true
+	}
 	ipcService := process.GetService()
 	ipcService.IsDev = isDev
 

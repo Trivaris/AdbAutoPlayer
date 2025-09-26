@@ -187,6 +187,14 @@ func (g *GamesService) setPythonBinaryPath() error {
 		return err
 	}
 
+
+	if override := os.Getenv("ADB_AUTOPLAYER_PYTHON_DIR"); override != "" {
+		if stat, statErr := os.Stat(override); statErr == nil && stat.IsDir() {
+			process.GetService().SetPythonBinaryPath(override)
+			return nil
+		}
+	}
+
 	if process.GetService().IsDev {
 		pythonPath := filepath.Join(workingDir, "python")
 		process.GetService().SetPythonBinaryPath(pythonPath)
@@ -204,6 +212,39 @@ func (g *GamesService) setPythonBinaryPath() error {
 		process.GetService().SetPythonBinaryPath(filepath.Join(workingDir, "binaries", executable))
 	}
 	return nil
+}
+
+func resolveGameConfigPathForLogging(rawPath string) string {
+	if rawPath == "" {
+		return ""
+	}
+
+	normalized := filepath.FromSlash(rawPath)
+	if filepath.IsAbs(normalized) {
+		return filepath.Clean(normalized)
+	}
+
+	var candidates []string
+
+	if stdruntime.GOOS == "linux" {
+		if home, err := os.UserHomeDir(); err == nil {
+			candidates = append(candidates, filepath.Join(home, ".config", "adbautoplayer", normalized))
+		}
+	}
+
+	if absPath, err := filepath.Abs(normalized); err == nil {
+		candidates = append(candidates, absPath)
+	}
+
+	candidates = append(candidates, normalized)
+
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return filepath.Clean(candidate)
+		}
+	}
+
+	return filepath.Clean(candidates[0])
 }
 
 func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interface{}, error) {
