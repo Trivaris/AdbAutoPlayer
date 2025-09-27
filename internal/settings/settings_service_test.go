@@ -3,6 +3,7 @@ package settings
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 )
@@ -105,38 +106,80 @@ func TestSettingsService_SaveGeneralSettings_WithTempFile(t *testing.T) {
 }
 
 func TestResolveGeneralSettingsPath(t *testing.T) {
-	// Test the path resolution logic
-	path := resolveGeneralSettingsPath()
-
-	// Should return a non-empty string
-	if path == "" {
-		t.Error("Expected non-empty path")
+	resolvedPath := resolveGeneralSettingsPath()
+	if resolvedPath == "" {
+		t.Fatal("Expected non-empty path")
 	}
 
-	// Should return the first fallback path if no files exist
-	expectedFallback := "config.toml"
-	if path == expectedFallback {
-		// This is expected when no config files exist
-		return
+	if !filepath.IsAbs(resolvedPath) {
+		t.Fatalf("Expected absolute path, got %s", resolvedPath)
 	}
 
-	// If it's not the fallback, it should be one of the predefined paths
-	validPaths := []string{
-		"config.toml",
-		"config/config.toml",
-		"../../config/config.toml",
+	expectedDir := configDirForOS(runtime.GOOS, getUserHomeDir(), os.Getenv("APPDATA"))
+	expectedPath := filepath.Join(expectedDir, "config.toml")
+	if resolvedPath != expectedPath {
+		t.Fatalf("Expected %s, got %s", expectedPath, resolvedPath)
 	}
+}
 
-	isValid := false
-	for _, validPath := range validPaths {
-		if path == validPath {
-			isValid = true
-			break
-		}
+func TestConfigDir(t *testing.T) {
+	expected := configDirForOS(runtime.GOOS, getUserHomeDir(), os.Getenv("APPDATA"))
+	if ConfigDir() != expected {
+		t.Fatalf("Expected %s, got %s", expected, ConfigDir())
 	}
+}
 
-	if !isValid {
-		t.Errorf("Resolved path '%s' is not in expected paths", path)
+func TestGamesDir(t *testing.T) {
+	expected := filepath.Join(configDirForOS(runtime.GOOS, getUserHomeDir(), os.Getenv("APPDATA")), "games")
+	if GamesDir() != expected {
+		t.Fatalf("Expected %s, got %s", expected, GamesDir())
+	}
+}
+
+func TestConfigDirForOSLinux(t *testing.T) {
+	home := "/home/testuser"
+	result := configDirForOS("linux", home, "")
+	expected := filepath.Join(home, ".config", "adbautoplayer")
+	if result != expected {
+		t.Fatalf("Expected %s, got %s", expected, result)
+	}
+}
+
+
+func TestConfigDirForOSWindowsWithAppData(t *testing.T) {
+	home := "C:\\Users\\TestUser"
+	appdata := filepath.Join(home, "AppData", "Roaming")
+	result := configDirForOS("windows", home, appdata)
+	expected := filepath.Join(appdata, "AdbAutoPlayer")
+	if result != expected {
+		t.Fatalf("Expected %s, got %s", expected, result)
+	}
+}
+
+func TestConfigDirForOSWindowsWithoutAppData(t *testing.T) {
+	home := "C:\\Users\\TestUser"
+	result := configDirForOS("windows", home, "")
+	expected := filepath.Join(home, "AppData", "Roaming", "AdbAutoPlayer")
+	if result != expected {
+		t.Fatalf("Expected %s, got %s", expected, result)
+	}
+}
+
+func TestConfigDirForOSDarwin(t *testing.T) {
+	home := "/Users/testuser"
+	result := configDirForOS("darwin", home, "")
+	expected := filepath.Join(home, "Library", "Application Support", "AdbAutoPlayer")
+	if result != expected {
+		t.Fatalf("Expected %s, got %s", expected, result)
+	}
+}
+
+func TestConfigDirForOSDefault(t *testing.T) {
+	home := "/Users/testuser"
+	result := configDirForOS("plan9", home, "")
+	expected := filepath.Join(home, ".adbautoplayer")
+	if result != expected {
+		t.Fatalf("Expected %s, got %s", expected, result)
 	}
 }
 

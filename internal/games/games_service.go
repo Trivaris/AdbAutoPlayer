@@ -5,7 +5,6 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/process"
 	"adb-auto-player/internal/settings"
 	"archive/zip"
@@ -221,16 +220,12 @@ func resolveGameConfigPathForLogging(rawPath string) string {
 
 	normalized := filepath.FromSlash(rawPath)
 	if filepath.IsAbs(normalized) {
+		logger.Get().Debugf("Game config path already absolute: %s", normalized)
 		return filepath.Clean(normalized)
 	}
 
-	var candidates []string
-
-	if stdruntime.GOOS == "linux" {
-		if home, err := os.UserHomeDir(); err == nil {
-			candidates = append(candidates, filepath.Join(home, ".config", "adbautoplayer", normalized))
-		}
-	}
+	gamesDir := settings.GamesDir()
+	candidates := []string{filepath.Join(gamesDir, normalized)}
 
 	if absPath, err := filepath.Abs(normalized); err == nil {
 		candidates = append(candidates, absPath)
@@ -240,53 +235,52 @@ func resolveGameConfigPathForLogging(rawPath string) string {
 
 	for _, candidate := range candidates {
 		if _, err := os.Stat(candidate); err == nil {
+			logger.Get().Debugf("Resolved game config path for %s -> %s", rawPath, candidate)
 			return filepath.Clean(candidate)
 		}
 	}
 
-	return filepath.Clean(candidates[0])
+	cleaned := filepath.Clean(candidates[0])
+	logger.Get().Debugf("Using default game config path for %s -> %s", rawPath, cleaned)
+	return cleaned
 }
 
 func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interface{}, error) {
 	var gameConfig interface{}
 	var err error
 
-	workingDir, err := os.Getwd()
-	if err != nil {
-		logger.Get().Errorf("Failed to get current working directory: %v", err)
+	gamesDir := settings.GamesDir()
+	configPath := filepath.Join(gamesDir, game.ConfigPath)
+	logger.Get().Debugf("Resolved config path for game %s -> %s", game.GameTitle, configPath)
+
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		logger.Get().Errorf("Failed to create game config directory: %v", err)
 		return nil, err
 	}
 
-	paths := []string{
-		filepath.Join(workingDir, "games", game.ConfigPath),                        // Windows .exe
-		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath), // Dev
-		filepath.Join(workingDir, "../Resources/games", game.ConfigPath),           // MacOS .app Bundle
-	}
-	configPath := path.GetFirstPathThatExists(paths)
-
 	g.mu.Lock()
-	if configPath == "" {
-		if stdruntime.GOOS == "darwin" {
-			g.lastOpenGameConfigPath = filepath.Join(workingDir, "../Resources/games", game.ConfigPath)
-		} else {
-			g.lastOpenGameConfigPath = filepath.Join(workingDir, "games", game.ConfigPath)
-		}
-		g.mu.Unlock()
+	g.lastOpenGameConfigPath = configPath
+	g.mu.Unlock()
+
+	if _, statErr := os.Stat(configPath); errors.Is(statErr, os.ErrNotExist) {
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
 			"constraints": game.Constraints,
 		}
-
+		logger.Get().Debugf("Game config file does not exist; returning empty settings for %s", configPath)
 		return response, nil
+	} else if statErr != nil {
+		logger.Get().Errorf("Failed to access game config: %v", statErr)
+		return nil, statErr
 	}
-
-	g.lastOpenGameConfigPath = configPath
-	g.mu.Unlock()
 
 	gameConfig, err = settings.LoadTOML[map[string]interface{}](configPath)
 	if err != nil {
+		logger.Get().Errorf("Failed to load game config %s: %v", configPath, err)
 		return nil, err
 	}
+
+	logger.Get().Debugf("Loaded game config %s successfully", configPath)
 
 	response := map[string]interface{}{
 		"settings":    gameConfig,

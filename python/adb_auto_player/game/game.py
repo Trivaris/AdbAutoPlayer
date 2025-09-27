@@ -1089,7 +1089,7 @@ class Game(ABC):
             module = self._get_game_module()
 
             self._config_file_path = (
-                ConfigLoader.games_dir()
+                ConfigLoader.user_games_dir()
                 / module
                 / (StringHelper.snake_to_pascal(module) + ".toml")
             )

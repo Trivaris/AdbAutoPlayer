@@ -3,11 +3,22 @@ package settings
 import (
 	"github.com/stretchr/testify/assert"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestLoadConfig(t *testing.T) {
-	mainConfig, err := LoadTOML[GeneralSettings]("../../config/config.toml")
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.toml")
+	configContent := []byte(`[device]
+ID = "127.0.0.1:7555"
+`)
+
+	if err := os.WriteFile(configPath, configContent, 0644); err != nil {
+		t.Fatalf("failed to write temp config: %v", err)
+	}
+
+	mainConfig, err := LoadTOML[GeneralSettings](configPath)
 	if err != nil {
 		t.Errorf("[Error LoadTOML()] %v", err)
 		return
@@ -16,9 +27,7 @@ func TestLoadConfig(t *testing.T) {
 }
 
 func TestSaveConfig(t *testing.T) {
-	testFilePath := "test_config.toml"
-
-	deleteFileIfExists(testFilePath, t)
+	testFilePath := filepath.Join(t.TempDir(), "test_config.toml")
 
 	mainConfig := NewGeneralSettings()
 
@@ -30,16 +39,5 @@ func TestSaveConfig(t *testing.T) {
 	if _, err := os.Stat(testFilePath); os.IsNotExist(err) {
 		t.Errorf("[Error] File does not exist after SaveTOML")
 		return
-	}
-
-	deleteFileIfExists(testFilePath, t)
-}
-
-func deleteFileIfExists(filePath string, t *testing.T) {
-	if _, err := os.Stat(filePath); err == nil {
-		err = os.Remove(filePath)
-		if err != nil {
-			t.Errorf("[Error removing existing test file] %v", err)
-		}
 	}
 }

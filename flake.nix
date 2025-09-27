@@ -62,20 +62,7 @@
               --prefix PATH : ${pkgs.uv}/bin \
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
               --set ADB_AUTOPLAYER_FORCE_DEV 1 \
-              --set LD_LIBRARY_PATH "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib:\$LD_LIBRARY_PATH" \
-              --run 'config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/adbautoplayer"
-                    python_src="'"$out"'/share/python"
-                    python_dest="''${XDG_CONFIG_HOME:-$HOME/.config}/adbautoplayer/python"
-                    if [ ! -d "$python_dest" ] || [ "$(cat "$python_dest/.source" 2>/dev/null)" != "$python_src" ]; then
-                      rm -rf "$python_dest"
-                      mkdir -p "$(dirname "$python_dest")"
-                      cp -r --no-preserve=mode "$python_src" "$python_dest"
-                      rm -rf "$python_dest/.venv"
-                      printf "%s" "$python_src" > "$python_dest/.source"
-                    fi
-                    export ADB_AUTOPLAYER_PYTHON_DIR="$python_dest"
-                    mkdir -p "$config_dir"
-                    cd "$config_dir"'
+              --set LD_LIBRARY_PATH "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib:\$LD_LIBRARY_PATH"
           '';
 
           ldflags = [

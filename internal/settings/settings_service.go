@@ -5,8 +5,9 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/path"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 )
@@ -111,16 +112,56 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 }
 
 func resolveGeneralSettingsPath() string {
-	paths := []string{
-		"config.toml",              // distributed
-		"config/config.toml",       // dev
-		"../../config/config.toml", // macOS dev no not a joke
-	}
+	path := filepath.Join(ConfigDir(), "config.toml")
+	logger.Get().Debugf("Resolved general settings path: %s", path)
+	return path
+}
 
-	settingsPath := path.GetFirstPathThatExists(paths)
-	if settingsPath == "" {
-		return paths[0]
-	}
+func resolveConfigDir() string {
+	return configDirForOS(runtime.GOOS, getUserHomeDir(), os.Getenv("APPDATA"))
+}
 
-	return settingsPath
+// ConfigDir returns the absolute directory for shared configuration files.
+func ConfigDir() string {
+	dir := resolveConfigDir()
+	logger.Get().Debugf("Resolved config directory: %s", dir)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		logger.Get().Debugf("Unable to ensure config directory exists: %v", err)
+	}
+	return dir
+}
+
+// GamesDir returns the absolute directory that should contain game configs.
+func GamesDir() string {
+	gamesDir := filepath.Join(ConfigDir(), "games")
+	logger.Get().Debugf("Resolved games directory: %s", gamesDir)
+	if err := os.MkdirAll(gamesDir, 0755); err != nil {
+		logger.Get().Debugf("Unable to ensure games directory exists: %v", err)
+	}
+	return gamesDir
+}
+
+func getUserHomeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return os.TempDir()
+	}
+	return home
+}
+
+func configDirForOS(goos string, home string, appdata string) string {
+	switch goos {
+	case "linux":
+		return filepath.Join(home, ".config", "adbautoplayer")
+	case "windows":
+		base := appdata
+		if base == "" {
+			base = filepath.Join(home, "AppData", "Roaming")
+		}
+		return filepath.Join(base, "AdbAutoPlayer")
+	case "darwin":
+		return filepath.Join(home, "Library", "Application Support", "AdbAutoPlayer")
+	default:
+		return filepath.Join(home, ".adbautoplayer")
+	}
 }

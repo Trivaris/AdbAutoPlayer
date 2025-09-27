@@ -1,6 +1,7 @@
 """ADB Auto Player Config Loader Module."""
 
 import logging
+import os
 import platform
 from functools import lru_cache
 from pathlib import Path
@@ -32,8 +33,39 @@ class ConfigLoader:
 
     @staticmethod
     @lru_cache(maxsize=1)
+    def config_dir() -> Path:
+        """Return the absolute directory that should contain the main config."""
+        system = platform.system()
+        if system == "Linux":
+            config_dir = Path.home() / ".config" / "adbautoplayer"
+        elif system == "Windows":
+            appdata = os.environ.get("APPDATA")
+            if appdata:
+                config_dir = Path(appdata) / "AdbAutoPlayer"
+            else:
+                config_dir = Path.home() / "AppData" / "Roaming" / "AdbAutoPlayer"
+        elif system == "Darwin":
+            config_dir = (
+                Path.home()
+                / "Library"
+                / "Application Support"
+                / "AdbAutoPlayer"
+            )
+        else:
+            config_dir = Path.home() / ".adbautoplayer"
+
+        resolved = config_dir.expanduser().absolute()
+        logging.debug(f"Resolved config directory: {resolved}")
+        try:
+            resolved.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logging.debug(f"Unable to ensure config directory exists: {exc}")
+        return resolved
+
+    @staticmethod
+    @lru_cache(maxsize=1)
     def games_dir() -> Path:
-        """Determine and return the games directory."""
+        """Determine and return the resource games directory."""
         working_dir = ConfigLoader.working_dir()
         linux_candidates: list[Path] = []
         if platform.system() == "Linux":
@@ -58,7 +90,19 @@ class ConfigLoader:
             working_dir.parent / "Resources" / "games",  # MacOS .app Bundle
         ]
         games_dir = next((c for c in candidates if c.exists()), candidates[0])
-        logging.debug(f"Python games path: {games_dir}")
+        logging.debug(f"Resolved resource games directory: {games_dir}")
+        return games_dir
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def user_games_dir() -> Path:
+        """Return the user-writable games configuration directory."""
+        games_dir = ConfigLoader.config_dir() / "games"
+        logging.debug(f"Resolved user games directory: {games_dir}")
+        try:
+            games_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logging.debug(f"Unable to ensure user games directory exists: {exc}")
         return games_dir
 
     @staticmethod
@@ -72,21 +116,6 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def general_settings() -> GeneralSettings:
         """Locate and load the general settings config.toml file."""
-        if platform.system() == "Linux":
-            config_toml_path = Path.home() / ".config" / "adbautoplayer" / "config.toml"
-            logging.debug(f"Python config.toml path: {config_toml_path}")
-            return GeneralSettings.from_toml(config_toml_path)
-
-        working_dir = ConfigLoader.working_dir()
-        candidates: list[Path] = [
-            working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle
-            working_dir.parent / "config.toml",  # Windows CLI .exe
-            working_dir.parent / "config" / "config.toml",  # uv
-            working_dir.parent.parent / "config" / "config.toml",  # PyCharm
-        ]
-
-        config_toml_path: Path = next(
-            (c for c in candidates if c.exists()), candidates[0]
-        )
+        config_toml_path = ConfigLoader.config_dir() / "config.toml"
         logging.debug(f"Python config.toml path: {config_toml_path}")
         return GeneralSettings.from_toml(config_toml_path)

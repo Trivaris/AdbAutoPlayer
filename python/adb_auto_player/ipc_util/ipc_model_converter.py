@@ -144,7 +144,7 @@ class IPCModelConverter:
             if config_path:
                 config_path = Path(config_path)
                 if not config_path.is_absolute():
-                    config_path = ConfigLoader.games_dir() / config_path
+                    config_path = ConfigLoader.user_games_dir() / config_path
 
             config = game_metadata.gui_metadata.config_class.from_toml(config_path)
         except Exception:
