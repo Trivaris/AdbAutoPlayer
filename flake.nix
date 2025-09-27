@@ -62,6 +62,7 @@
               --prefix PATH : ${pkgs.uv}/bin \
               --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
               --set ADB_AUTOPLAYER_FORCE_DEV 1 \
+              --set ADB_AUTOPLAYER_PYTHON_DIR $out/share/python \
               --set LD_LIBRARY_PATH "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib:\$LD_LIBRARY_PATH"
           '';
 

@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -186,18 +187,40 @@ func (g *GamesService) setPythonBinaryPath() error {
 		return err
 	}
 
-
 	if override := os.Getenv("ADB_AUTOPLAYER_PYTHON_DIR"); override != "" {
 		if stat, statErr := os.Stat(override); statErr == nil && stat.IsDir() {
-			process.GetService().SetPythonBinaryPath(override)
+			writablePath, ensureErr := ensureWritablePythonDir(override)
+			if ensureErr != nil {
+				return ensureErr
+			}
+			process.GetService().SetPythonBinaryPath(writablePath)
 			return nil
 		}
 	}
 
 	if process.GetService().IsDev {
-		pythonPath := filepath.Join(workingDir, "python")
-		process.GetService().SetPythonBinaryPath(pythonPath)
-		return nil
+		devCandidates := []string{
+			filepath.Join(workingDir, "python"),
+		}
+
+		if execPath, execErr := os.Executable(); execErr == nil {
+			execDir := filepath.Dir(execPath)
+			sharePython := filepath.Clean(filepath.Join(execDir, "..", "share", "python"))
+			devCandidates = append(devCandidates, sharePython)
+		}
+
+		for _, candidate := range devCandidates {
+			if stat, statErr := os.Stat(candidate); statErr == nil && stat.IsDir() {
+				writablePath, ensureErr := ensureWritablePythonDir(candidate)
+				if ensureErr != nil {
+					return ensureErr
+				}
+				process.GetService().SetPythonBinaryPath(writablePath)
+				return nil
+			}
+		}
+
+		return fmt.Errorf("no python directory found in dev mode; checked %v", devCandidates)
 	}
 
 	executable := "adb_auto_player.exe"
@@ -211,6 +234,114 @@ func (g *GamesService) setPythonBinaryPath() error {
 		process.GetService().SetPythonBinaryPath(filepath.Join(workingDir, "binaries", executable))
 	}
 	return nil
+}
+
+func ensureWritablePythonDir(src string) (string, error) {
+	if dirWritable(src) {
+		return src, nil
+	}
+
+	storeIdentifier := filepath.Base(filepath.Dir(filepath.Dir(src)))
+	if storeIdentifier == "" || storeIdentifier == string(os.PathSeparator) || storeIdentifier == "." {
+		storeIdentifier = "store"
+	}
+
+	targetRoot := filepath.Join(settings.ConfigDir(), "python")
+	targetDir := filepath.Join(targetRoot, storeIdentifier)
+
+	if stat, err := os.Stat(targetDir); err == nil && stat.IsDir() {
+		if dirWritable(targetDir) {
+			return targetDir, nil
+		}
+		if err := os.RemoveAll(targetDir); err != nil {
+			return "", fmt.Errorf("failed to remove stale python directory %s: %w", targetDir, err)
+		}
+	} else if err != nil && !os.IsNotExist(err) {
+		return "", fmt.Errorf("unable to access python directory %s: %w", targetDir, err)
+	}
+
+	if err := copyDir(src, targetDir); err != nil {
+		return "", fmt.Errorf("failed to copy python directory to %s: %w", targetDir, err)
+	}
+
+	return targetDir, nil
+}
+
+func dirWritable(path string) bool {
+	if path == "" {
+		return false
+	}
+
+	testFile, err := os.CreateTemp(path, ".write-test-*")
+	if err != nil {
+		return false
+	}
+
+	name := testFile.Name()
+	_ = testFile.Close()
+	_ = os.Remove(name)
+	return true
+}
+
+func copyDir(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relative, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(dst, relative)
+
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			mode := info.Mode()
+			if mode&0200 == 0 {
+				mode |= 0200
+			}
+			return os.MkdirAll(targetPath, mode)
+		}
+
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+				return err
+			}
+			return os.Symlink(target, targetPath)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			return err
+		}
+
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode())
+		if err != nil {
+			return err
+		}
+
+		if _, err = io.Copy(dstFile, srcFile); err != nil {
+			_ = dstFile.Close()
+			return err
+		}
+
+		return dstFile.Close()
+	})
 }
 
 func resolveGameConfigPathForLogging(rawPath string) string {
