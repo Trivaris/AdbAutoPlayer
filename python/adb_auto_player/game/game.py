@@ -1056,7 +1056,8 @@ class Game(ABC):
             return
 
         file_index = self._debug_screenshot_counter % debug_screenshot_save_num
-        debug_dir = ConfigLoader.app_data_dir() / "debug"
+        debug_dir_override = os.getenv("ADB_AUTO_PLAYER_DEBUG_DIR")
+        debug_dir = Path(debug_dir_override).expanduser() if debug_dir_override != "" else "debug"
         os.makedirs(debug_dir, exist_ok=True)
 
         file_name = debug_dir / f"{file_index}.png"
@@ -1102,12 +1103,10 @@ class Game(ABC):
     def get_template_dir_path(self) -> Path:
         """Retrieve path to images."""
         if self._template_dir_path is None:
+            template_dir_override = os.getenv("ADB_AUTO_PLAYER_TEMPLATE_DIR")
             module = self._get_game_module()
-            working_dir = ConfigLoader.working_dir() / "games"
-            games_dir = ConfigLoader.games_dir()
-            base_dir = working_dir if platform.system() == "Linux" else games_dir
 
-            self._template_dir_path = base_dir / module / "templates"
+            self._template_dir_path = Path(template_dir_override).expanduser() / module if template_dir_override != "" else ConfigLoader.games_dir() / module / "templates"
             logging.debug(f"{module} template path: {self._template_dir_path}")
 
         return self._template_dir_path

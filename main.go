@@ -14,6 +14,8 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"log"
 	"log/slog"
+	stdruntime "runtime"
+	"os"
 )
 
 //go:embed all:frontend/dist
@@ -26,6 +28,13 @@ func main() {
 	println()
 	println("Version:", Version)
 
+	if stdruntime.GOOS == "linux" {
+		if err := os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1"); err != nil {
+			log.Fatalf("failed to set env var: %v", err)
+		}
+	}
+
+	// Override of config dir
 	isDev := Version == "dev"
 	ipcService := process.GetService()
 	ipcService.IsDev = isDev

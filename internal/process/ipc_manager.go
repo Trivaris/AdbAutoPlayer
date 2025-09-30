@@ -3,6 +3,7 @@ package process
 import (
 	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/event_names"
+	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/notifications"
@@ -345,11 +346,23 @@ func (pm *IPCManager) handleLogMessage(logMessage ipc.LogMessage) {
 
 // setupLogFile creates a log file for the current command execution.
 func (pm *IPCManager) setupLogFile(args []string) error {
+	var debugDir string
+
 	if settings.GetService().GetGeneralSettings().Logging.TaskLogLimit <= 0 {
 		return nil
 	}
 
-	debugDir := "debug"
+	debugDirOverride := os.Getenv("ADB_AUTO_PLAYER_DEBUG_DIR")
+	if debugDirOverride != "" {
+		expanded, err := path.ExpandUser(debugDirOverride)
+		if err != nil {
+			expanded = debugDirOverride
+		}
+		debugDir = expanded
+	} else {
+		debugDir = "debug"
+	}
+
 	if err := os.MkdirAll(debugDir, 0755); err != nil {
 		logger.Get().Errorf("Failed to create debug directory: %v", err)
 		return err

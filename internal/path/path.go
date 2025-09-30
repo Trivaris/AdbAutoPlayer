@@ -38,3 +38,26 @@ func ChangeWorkingDirForProd() {
 		panic(err)
 	}
 }
+
+// expandUser replaces a leading "~" with the current user's home dir.
+// If the path does not start with "~", it is returned unchanged.
+func ExpandUser(path string) (string, error) {
+	if path == "" || path[0] != '~' {
+		return path, nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	if path == "~" {
+		return home, nil
+	}
+	if strings.HasPrefix(path, "~/") {
+		return filepath.Join(home, path[2:]), nil
+	}
+
+	// "~something" (like ~user) not handled here
+	return path, nil
+}

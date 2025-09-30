@@ -7,7 +7,7 @@ let
     inherit version;
     pname = "adb-auto-player-frontend";
     src = ./frontend;
-    npmDepsHash = "sha256-pGjIbco+VPdmNC7Cj0NU3r9ITQJD7mPqlG80iZU3vjc=";
+    npmDepsHash = "sha256-7Y3UOQ4uT2rcNXS2opoE3ZvH20k7vL3+sawZhBT75r4=";
     npmBuildScript = "build";
 
     installPhase = ''
@@ -16,6 +16,13 @@ let
       cp -R dist/. $out/dist
       runHook postInstall
     '';
+
+    meta = {
+      description = "AdbAutoPlayer svelte frontend";
+      homepage = "https://github.com/AdbAutoPlayer/AdbAutoPlayer";
+      license = pkgs.lib.licenses.mit;
+      maintainers = [ pkgs.lib.maintainers.trivaris ];
+    };
   };
 
   pythonBackend = py.buildPythonApplication {
@@ -62,10 +69,17 @@ let
       "uvicorn[standard]"
     ];
 
-    postInstall = ''
-      wrapProgram $out/bin/adb-auto-player \
-        --prefix PATH : "${pkgs.android-tools}/bin:${pkgs.tesseract}/bin:${pkgs.ffmpeg}/bin"
-    '';
+    makeWrapperArgs = [
+      "--prefix" "PATH" ":" "${pkgs.android-tools}/bin:${pkgs.tesseract}/bin:${pkgs.ffmpeg}/bin"
+    ];
+
+    meta = {
+      description = "AdbAutoPlayer python backend";
+      homepage = "https://github.com/AdbAutoPlayer/AdbAutoPlayer";
+      license = pkgs.lib.licenses.mit;
+      maintainers = [ pkgs.lib.maintainers.trivaris ];
+      mainProgram = "adb-auto-player";
+    };
   };
 
   gui = pkgs.buildGo124Module {
@@ -96,9 +110,9 @@ let
       mkdir -p frontend
       cp -R ${frontend}/dist frontend/dist
 
-      mkdir -p $out/bin/games/{afk_journey,guitar_girl}/templates
-      cp -R ${./python/adb_auto_player/games/afk_journey/templates}/. $out/bin/games/afk_journey/templates
-      cp -R ${./python/adb_auto_player/games/guitar_girl/templates}/. $out/bin/games/guitar_girl/templates
+      mkdir -p $out/share/adb_auto_player/templates/{afk_journey,guitar_girl}
+      cp -R ${./python/adb_auto_player/games/afk_journey/templates}/. $out/share/adb_auto_player/templates/afk_journey/
+      cp -R ${./python/adb_auto_player/games/guitar_girl/templates}/. $out/share/adb_auto_player/templates/guitar_girl/
     '';
 
     postInstall = ''
@@ -108,8 +122,10 @@ let
       wrapProgram $out/bin/adb-auto-player \
         --prefix PATH : "${pkgs.uv}/bin" \
         --suffix PATH : "${pkgs.android-tools}/bin:${pkgs.tesseract}/bin:${pkgs.ffmpeg}/bin" \
-        --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
-        --suffix LD_LIBRARY_PATH : "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib"
+        --suffix LD_LIBRARY_PATH : "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib" \
+        --set ADB_AUTO_PLAYER_CONFIG_DIR "~/.config/adb_auto_player" \
+        --set ADB_AUTO_PLAYER_TEMPLATE_DIR "$out/share/adb_auto_player/templates" \
+        --set ADB_AUTO_PLAYER_DEBUG_DIR "~/.local/state/adb_auto_player/debug"
     '';
 
     postConfigure = ''

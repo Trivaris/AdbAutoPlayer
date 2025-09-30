@@ -113,27 +113,28 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 }
 
 func resolveGeneralSettingsPath() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		logger.Get().Errorf("Failed to get the user home directory: %v", err)
+	var settingsPath string
+
+	configDirOverride := os.Getenv("ADB_AUTO_PLAYER_CONFIG_DIR")
+	if configDirOverride != "" {
+		expanded, err := path.ExpandUser(configDirOverride)
+		if err != nil {
+			expanded = configDirOverride
+		}
+		settingsPath = filepath.Join(expanded, "config.toml")
+	} else {
+		paths := []string{
+			"config.toml",              // distributed
+			"config/config.toml",       // dev
+			"../../config/config.toml", // macOS dev no not a joke
+		}
+
+		settingsPath = path.GetFirstPathThatExists(paths)
+		if settingsPath == "" {
+			return paths[0]
+		}
 	}
 
-	paths := []string{}
-
-	if stdruntime.GOOS == "Linux" {
-		paths = append(paths, filepath.Join(homeDir, ".config/adb_auto_player/config.toml"))
-	}
-
-	paths = append(paths,
-		"config.toml",              // distributed
-		"config/config.toml",       // dev
-		"../../config/config.toml", // macOS dev no not a joke
-	)
-
-	settingsPath := path.GetFirstPathThatExists(paths)
-	if settingsPath == "" {
-		return paths[0]
-	}
-
+	// logger.Get().Infof("General Settings Path: %s", settingsPath)
 	return settingsPath
 }

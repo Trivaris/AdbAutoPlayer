@@ -4,6 +4,7 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import platform
+import os
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
@@ -34,15 +35,21 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def games_dir() -> Path:
         """Determine and return the games directory."""
+        config_dir_override = os.getenv("ADB_AUTO_PLAYER_CONFIG_DIR")
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
-            *([Path("~/.config/adb_auto_player/games").expanduser()] if platform.system() == "Linux" else []), # Linux GUI
             working_dir / "games",  # Windows GUI .exe, PyCharm
             working_dir.parent / "games",  # Windows CLI .exe
             working_dir / "adb_auto_player" / "games",  # uv
             working_dir.parent / "Resources" / "games",  # MacOS .app Bundle
         ]
-        games_dir = next((c for c in candidates if c.exists()), candidates[0])
+
+        games_dir = (
+            Path(config_dir_override).expanduser() / "games"
+            if config_dir_override
+            else next((c for c in candidates if c.exists()), candidates[0])
+        )
+        
         logging.debug(f"Python games path: {games_dir}")
         return games_dir
 
@@ -55,29 +62,23 @@ class ConfigLoader:
         return working_dir if ".config" in games_dir.parts else games_dir.parent / "binaries"
 
     @staticmethod
-    @lru_cache(maxsize=1)
-    def app_data_dir() -> Path:
-        """Return the application data directory based on the OS."""
-        if platform.system() == "Linux":
-            return Path("~/.local/state/adb_auto_player").expanduser()
-        return Path.cwd()
-
-    @staticmethod
     @register_cache(CacheGroup.GENERAL_SETTINGS)
     @lru_cache(maxsize=1)
     def general_settings() -> GeneralSettings:
         """Locate and load the general settings config.toml file."""
+        config_dir_override = os.getenv("ADB_AUTO_PLAYER_CONFIG_DIR")
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
-            *([Path("~/.config/adb_auto_player/config.toml").expanduser()] if platform.system() == "Linux" else []), # Linux
             working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle
             working_dir.parent / "config.toml",  # Windows CLI .exe
             working_dir.parent / "config" / "config.toml",  # uv
             working_dir.parent.parent / "config" / "config.toml",  # PyCharm
         ]
 
-        config_toml_path: Path = next(
+        config_toml_path: Path = Path(config_dir_override).expanduser() / "config.toml" if config_dir_override != "" else next(
             (c for c in candidates if c.exists()), candidates[0]
         )
+        
+        print(f"Python config.toml path: {config_toml_path}")
         logging.debug(f"Python config.toml path: {config_toml_path}")
         return GeneralSettings.from_toml(config_toml_path)

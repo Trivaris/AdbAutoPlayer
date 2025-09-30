@@ -208,31 +208,32 @@ func (g *GamesService) setPythonBinaryPath() error {
 
 func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interface{}, error) {
 	var gameConfig interface{}
+	var configPath string
 	var err error
 
+	configDirOverride := os.Getenv("ADB_AUTO_PLAYER_CONFIG_DIR")
 	workingDir, err := os.Getwd()
 	if err != nil {
 		logger.Get().Errorf("Failed to get current working directory: %v", err)
 		return nil, err
 	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		logger.Get().Errorf("Failed to get the user home directory: %v", err)
+	if configDirOverride != "" {
+		expanded, err := path.ExpandUser(configDirOverride)
+		if err != nil {
+			expanded = configDirOverride
+		}
+		configPath = filepath.Join(expanded, "games", game.ConfigPath)
+	} else {
+		paths := []string{
+			filepath.Join(workingDir, "games", game.ConfigPath),                        // Windows .exe
+			filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath), // Dev
+			filepath.Join(workingDir, "../Resources/games", game.ConfigPath),           // MacOS .app Bundle
+		}
+		configPath = path.GetFirstPathThatExists(paths)
 	}
 
-	paths := []string{}
-
-	if stdruntime.GOOS == "linux" {
-		paths = append(paths, filepath.Join(homeDir, ".config/adb_auto_player/games", game.ConfigPath)) //Linux binary
-	}
-
-	paths = append(paths,
-		filepath.Join(workingDir, "games", game.ConfigPath),                        // Windows .exe
-		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath), // Dev
-		filepath.Join(workingDir, "../Resources/games", game.ConfigPath),           // MacOS .app Bundle
-	)
-	configPath := path.GetFirstPathThatExists(paths)
+	// logger.Get().Infof("Game Settings Path: %s", configPath)
 
 	g.mu.Lock()
 	if configPath == "" {
