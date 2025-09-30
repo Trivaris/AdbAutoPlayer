@@ -68,12 +68,12 @@ let
     '';
   };
 
-  gui = pkgs.buildGoModule {
+  gui = pkgs.buildGo124Module {
     inherit version;
     pname = "adb-auto-player";
     src = ./.;
     subPackages = [ "." ];
-    vendorHash = "sha256-L0ufF3QoMpuEijo7zcuG53r5/6gsdEEIlZDbZXBLWaE=";
+    vendorHash = "sha256-fdhYlsUUg+LBhdvHKb1z1fdYago1biMh6VD/6OrPbxc=";
     env.CGO_ENABLED = "1";
 
     nativeBuildInputs = builtins.attrValues {
@@ -112,10 +112,15 @@ let
         --suffix LD_LIBRARY_PATH : "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.libGL}/lib:${pkgs.glib.out}/lib"
     '';
 
+    postConfigure = ''
+      chmod 777 vendor
+      cp -a vendor/vendor/* vendor
+    '';
+
     ldflags = [
       "-s"
       "-w"
-      "-X main.Version=${version}"
+      "-X 'main.Version=${version}'"
     ];
 
     buildFlagsArray = [
@@ -136,6 +141,6 @@ in
 {
   inherit frontend;
   default = gui;
-  backend = pythonBackend;
   desktop = gui;
+  backend = pythonBackend;
 }
