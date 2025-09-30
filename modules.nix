@@ -42,16 +42,16 @@ in
     home = {
       packages = [ self.packages.${pkgs.system}.default ];
       file = {
-        ".config/adb_auto_player/config.toml".text = tomlFormat.generate "config.toml" (
+        ".config/adb_auto_player/config.toml".source = tomlFormat.generate "config.toml" (
           recursiveUpdate (parseToml ./config/config.toml) cfg.settings
         );
 
-        ".config/adb_auto_player/games/afk_journey/AfkJourney.toml".text =
+        ".config/adb_auto_player/games/afk_journey/AfkJourney.toml".source =
           tomlFormat.generate "AfkJourney.toml" (
             recursiveUpdate (parseToml ./python/adb_auto_player/games/afk_journey/AfkJourney.toml) cfg.games.afkJourney
           );
 
-        ".config/adb_auto_player/games/guitar_girl/GuitarGirl.toml".text =
+        ".config/adb_auto_player/games/guitar_girl/GuitarGirl.toml".source =
           tomlFormat.generate "GuitarGirl.toml" (
             recursiveUpdate (parseToml ./python/adb_auto_player/games/afk_journey/AfkJourney.toml) cfg.games.guitarGirl
           );
