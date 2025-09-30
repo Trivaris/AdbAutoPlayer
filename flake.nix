@@ -30,8 +30,8 @@
       homeModules.default = import ./modules.nix self;
       packages = forAllSystems (system: pkgs: import ./packages.nix { inherit self pkgs system; });
 
-      devShells = forAllSystems (system: pkgs:
-        {
+      devShells = forAllSystems (
+        system: pkgs: {
           default = pkgs.mkShell {
             packages = builtins.attrValues {
               inherit (pkgs.python313Packages)
@@ -62,7 +62,7 @@
                 nuitka
                 pytest
                 pytest-cov
-              ;
+                ;
 
               inherit (pkgs)
                 uv
@@ -84,6 +84,7 @@
                 ;
             };
           };
-        });
+        }
+      );
     };
 }
