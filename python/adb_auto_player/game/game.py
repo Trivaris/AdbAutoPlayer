@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import threading
+import platform
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -1055,9 +1056,10 @@ class Game(ABC):
             return
 
         file_index = self._debug_screenshot_counter % debug_screenshot_save_num
-        os.makedirs("debug", exist_ok=True)
+        debug_dir = ConfigLoader.app_data_dir() / "debug"
+        os.makedirs(debug_dir, exist_ok=True)
 
-        file_name = f"debug/{file_index}.png"
+        file_name = debug_dir / f"{file_index}.png"
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
             if is_bgr:
@@ -1101,8 +1103,11 @@ class Game(ABC):
         """Retrieve path to images."""
         if self._template_dir_path is None:
             module = self._get_game_module()
+            working_dir = ConfigLoader.working_dir() / "games"
+            games_dir = ConfigLoader.games_dir()
+            base_dir = working_dir if platform.system() == "Linux" else games_dir
 
-            self._template_dir_path = ConfigLoader.games_dir() / module / "templates"
+            self._template_dir_path = base_dir / module / "templates"
             logging.debug(f"{module} template path: {self._template_dir_path}")
 
         return self._template_dir_path

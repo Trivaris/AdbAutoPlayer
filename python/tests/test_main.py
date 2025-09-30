@@ -22,7 +22,7 @@ class TestMain(unittest.TestCase):
         menu_json_string = get_game_menu_string("AFK Journey")
         self.assertIn('"game_title": "AFK Journey"', menu_json_string)
         self.assertIn(
-            '"config_path": "afk_journey/AFKJourney.toml"',
+            '"config_path": "afk_journey/AfkJourney.toml"',
             menu_json_string,
         )
         # check Menu Buttons are sent

@@ -1,0 +1,97 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1759132680,
+        "narHash": "sha256-G06Dm5tdW/979QOBsk1RB7igVEUlrPEn2L1bXSATnvo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2832ea42013e888a9b453b0390a40780c9b5b260",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable-small",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1759132680,
+        "narHash": "sha256-G06Dm5tdW/979QOBsk1RB7igVEUlrPEn2L1bXSATnvo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2832ea42013e888a9b453b0390a40780c9b5b260",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable-small",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1755027561,
+        "narHash": "sha256-IVft239Bc8p8Dtvf7UAACMG5P3ZV+3/aO28gXpGtMXI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "005433b926e16227259a1843015b5b2b7f7d1fc3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "pythonOverlays": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2",
+        "trivnixLib": "trivnixLib"
+      },
+      "locked": {
+        "lastModified": 1759183393,
+        "narHash": "sha256-sACHLXZfi09ep/mnHfKkkM5i78ZemjZOVYHACYQDC/Q=",
+        "owner": "Trivaris",
+        "repo": "TrivnixOverlays",
+        "rev": "bbc9f133da6f2d5e3c75b10b42c0433e46f960cc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Trivaris",
+        "repo": "TrivnixOverlays",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "pythonOverlays": "pythonOverlays"
+      }
+    },
+    "trivnixLib": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1758782853,
+        "narHash": "sha256-fxVCXm57sS/tIbrQukNJNQLZRDuoOwJd8FlWrmq6zrs=",
+        "owner": "Trivaris",
+        "repo": "TrivnixLib",
+        "rev": "62e08f202142ce5ab869c7ee217a4bb7f8d550d5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Trivaris",
+        "repo": "TrivnixLib",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

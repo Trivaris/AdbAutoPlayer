@@ -7,8 +7,10 @@ import (
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"runtime"
+	"path/filepath"
+	stdruntime "runtime"
 	"sync"
+	"os"
 )
 
 var (
@@ -78,10 +80,10 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 	updateLogLevel(s.generalSettings.Logging.Level)
 	s.mu.Unlock()
 
-	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
+	if settings.UI.NotificationsEnabled && stdruntime.GOOS != "windows" {
 		logger.Get().Warningf("Setting: 'Enable Notifications' only works on Windows")
 	}
-	if settings.UI.CloseShouldMinimize && runtime.GOOS != "windows" {
+	if settings.UI.CloseShouldMinimize && stdruntime.GOOS != "windows" {
 		logger.Get().Warningf("Setting: 'Close button should minimize the window' only works on Windows")
 	}
 
@@ -111,11 +113,22 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 }
 
 func resolveGeneralSettingsPath() string {
-	paths := []string{
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		logger.Get().Errorf("Failed to get the user home directory: %v", err)
+	}
+
+	paths := []string{}
+
+	if stdruntime.GOOS == "Linux" {
+		paths = append(paths, filepath.Join(homeDir, ".config/adb_auto_player/config.toml"))
+	}
+
+	paths = append(paths,
 		"config.toml",              // distributed
 		"config/config.toml",       // dev
 		"../../config/config.toml", // macOS dev no not a joke
-	}
+	)
 
 	settingsPath := path.GetFirstPathThatExists(paths)
 	if settingsPath == "" {

@@ -27,7 +27,7 @@ from .navigation import Navigation
 
 @register_game(
     name="AFK Journey",
-    config_file_path="afk_journey/AFKJourney.toml",
+    config_file_path="afk_journey/AfkJourney.toml",
     gui_metadata=GameGUIMetadata(
         config_class=Config,
         categories=list(AFKJCategory),

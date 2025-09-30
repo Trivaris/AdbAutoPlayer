@@ -3,6 +3,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
+import platform
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
@@ -35,6 +36,7 @@ class ConfigLoader:
         """Determine and return the games directory."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
+            *([Path("~/.config/adb_auto_player/games").expanduser()] if platform.system() == "Linux" else []), # Linux GUI
             working_dir / "games",  # Windows GUI .exe, PyCharm
             working_dir.parent / "games",  # Windows CLI .exe
             working_dir / "adb_auto_player" / "games",  # uv
@@ -48,7 +50,17 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def binaries_dir() -> Path:
         """Return the binaries directory."""
-        return ConfigLoader.games_dir().parent / "binaries"
+        games_dir = ConfigLoader.games_dir()
+        working_dir = ConfigLoader.working_dir()
+        return working_dir if ".config" in games_dir.parts else games_dir.parent / "binaries"
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def app_data_dir() -> Path:
+        """Return the application data directory based on the OS."""
+        if platform.system() == "Linux":
+            return Path("~/.local/state/adb_auto_player").expanduser()
+        return Path.cwd()
 
     @staticmethod
     @register_cache(CacheGroup.GENERAL_SETTINGS)
@@ -57,6 +69,7 @@ class ConfigLoader:
         """Locate and load the general settings config.toml file."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
+            *([Path("~/.config/adb_auto_player/config.toml").expanduser()] if platform.system() == "Linux" else []), # Linux
             working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle
             working_dir.parent / "config.toml",  # Windows CLI .exe
             working_dir.parent / "config" / "config.toml",  # uv
